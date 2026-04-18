@@ -1,0 +1,52 @@
+textdisplays:
+  templateChest:
+    contents:
+      - ''
+      - '  %design_clr_main%       рейдовый сундук  '
+      - '  '
+      - '  %design_clr_primary%До обновления лута %design_clr_main%{time} сек.  '
+      - '  '
+    settings:
+      scale: 1
+      backgroundColour: 144 # -1 for disable
+      billboard: vertical
+      updateTime: 3000 # -1 for disable
+      alignment: left # default: center
+      lineWidth: 250
+
+  portalIn:
+    contents:
+      - ''
+      - '  %design_clr_main%Вход в рейдовый мир  '
+      - '  '
+      - '  %design_clr_primary%Войти в него можно лишь %design_clr_main%1 раз.  '
+      - '  %design_clr_primary%Команды в рейде %design_clr_main%отключены  '
+      - '  %design_clr_primary%Выход только %design_clr_main%через обратный портал  '
+      - '  %design_clr_primary%Включен бесконечный %design_clr_main%пвп режим  '
+      - '  '
+      - '  %design_clr_primary%Событие закончится через  %design_clr_main%{time} сек.'
+      - '  '
+    settings:
+      scale: 1
+      backgroundColour: 144 # -1 for disable
+      billboard: vertical
+      updateTime: -1 # -1 for disable
+      alignment: left # default: center
+      lineWidth: 250
+  portalOut:
+    contents:
+      - ''
+      - '  %design_clr_main%Портал в обычный мир  '
+      - '  '
+      - '  %design_clr_primary%Телепортация в радиусе %design_clr_main%30 блоков%design_clr_primary% от входного портала  '
+      - '  %design_clr_primary%Будь аккуратнее, возможно тебя на %design_clr_main%выходе поджидают враги  '
+      - '  '
+      - '  %design_clr_primary%Событие закончится через  %design_clr_main%{time} сек.'
+      - '  '
+    settings:
+      scale: 1
+      backgroundColour: 144 # -1 for disable
+      billboard: vertical
+      updateTime: -1 # -1 for disable
+      alignment: left # default: center
+      lineWidth: 250
