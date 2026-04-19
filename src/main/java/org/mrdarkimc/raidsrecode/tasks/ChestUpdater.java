@@ -7,12 +7,10 @@ import org.bukkit.World;
 import org.bukkit.block.Chest;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
-import org.mrdarkimc.SatanicLib.Utils;
-import org.mrdarkimc.SatanicLib.tasks.CountDownTask;
 import org.mrdarkimc.enhancedtextdisplays.EnhancedTextDisplays;
 import org.mrdarkimc.enhancedtextdisplays.displays.MiniTextDisplay;
 import org.mrdarkimc.enhancedtextdisplays.displays.interfaces.DisplayHandler;
-import org.mrdarkimc.enhancedtextdisplays.tasks.UpdateHoloTask;
+import org.mrdarkimc.raidsrecode.EventTimer;
 import org.mrdarkimc.raidsrecode.SatanicRaids;
 
 import java.util.ArrayList;
@@ -21,35 +19,49 @@ import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-@Deprecated
 //Обновляет голограммы и содержимое сундуков
-public class ChestUpdateTask extends CountDownTask {
+public class ChestUpdater implements EventTimer.TimerTask {
     private final List<Location> chestLocations;
-    private final List<MiniTextDisplay> holograms;
+    //private final List<MiniTextDisplay> holograms;
     private final Random random = new Random();
     private final int refillChestTime = 60; //каждую минуту
     private final World world;
+    private boolean isHolosSpawned = false;
+    private List<EventTimer.TimerTask> hologramUpdaters;
 
-    @Deprecated
-    public ChestUpdateTask(MiniTextDisplay chestHoloTemplate, int lifetime) {
-        super(SatanicRaids.getInstance(), lifetime);
+
+    public ChestUpdater(MiniTextDisplay chestHoloTemplate) {
+//        super(SatanicRaids.getInstance(), lifetime);
         this.chestLocations = loadChestLocations();
         this.world = Bukkit.getWorld("RaidWorld");
-        this.holograms = new ArrayList<>(this.chestLocations.size());
-        for (int i = 0; i < this.chestLocations.size(); i++) {
-            holograms.add(chestHoloTemplate.makeCopy());
-        }
-    }
+        //this.holograms = new ArrayList<>(this.chestLocations.size());
+        this.hologramUpdaters = new ArrayList<>();
 
-    public ChestUpdateTask(World world, MiniTextDisplay chestHoloTemplate, int lifetime) {
-        super(SatanicRaids.getInstance(), lifetime);
-        this.chestLocations = loadChestLocations();
-        this.world = world;
-        this.holograms = new ArrayList<>(this.chestLocations.size());
-        for (int i = 0; i < this.chestLocations.size(); i++) {
-            holograms.add(chestHoloTemplate.makeCopy());
+        for (Location chestLocation : this.chestLocations) {
+//            holograms.add(chestHoloTemplate.makeCopy());
+            HoloUpdater holoUpdater = new HoloUpdater(chestHoloTemplate.makeCopy(), chestLocation, refillChestTime);
+            hologramUpdaters.add(holoUpdater);
         }
+
     }
+    @Override
+    public void nextSecound(EventTimer timer) {
+        //ensureHologramsExists();
+        updateHolos(timer);
+        if (timer.getCurrentTime() % refillChestTime != 0) {
+            return;
+        }
+        fillChests();
+    }
+//    public ChestUpdater(World world, MiniTextDisplay chestHoloTemplate) {
+//        //super(SatanicRaids.getInstance(), lifetime);
+//        this.chestLocations = loadChestLocations();
+//        this.world = world;
+//        this.holograms = new ArrayList<>(this.chestLocations.size());
+//        for (int i = 0; i < this.chestLocations.size(); i++) {
+//            holograms.add(chestHoloTemplate.makeCopy());
+//        }
+//    }
 
     private List<Location> loadChestLocations() {
         List<Map<?, ?>> chestsConfig = SatanicRaids.getInstance().getMainConfig().get().getMapList("chests");
@@ -66,51 +78,38 @@ public class ChestUpdateTask extends CountDownTask {
                 }).collect(Collectors.toList());
     }
 
-    @Override
-    public void work() {
-        updateHolos();//обновляем таймер на голограммах
-        if (current % refillChestTime != 0) {
-            return;
-        }
-        fillChests();
-    }
-
-
-    private void updateHolos() {
-        for (MiniTextDisplay holo : holograms) {
-            updateHologram(holo);
-        }
+    private void updateHolos(EventTimer timer) {
+        hologramUpdaters.forEach(e -> e.nextSecound(timer));
     }
 
     //todo прикрутить формат времени
-    private void updateHologram(MiniTextDisplay holo) {
+    private void updateHologram(MiniTextDisplay holo, EventTimer eventTimer) {
         List<String> rawContents = holo.getRawContents();
-        rawContents.replaceAll((s) -> s.replace("{time}", getFormattedTime()));
+        rawContents.replaceAll((s) -> s.replace("{time}", calculateLocalTime(eventTimer)));
         holo.applyText(rawContents);
     }
 
-    public String getFormattedTime() {
-        int secondsPassedInCurrentCycle = current % refillChestTime;
+    private String calculateLocalTime(EventTimer timer) {
+        int secondsPassedInCurrentCycle = timer.getCurrentTime() % refillChestTime;
         int timeLeft = refillChestTime - secondsPassedInCurrentCycle;
-        return formatTime(timeLeft);
-    }
-    public String formatTime(int i){
-        return "не поддерживается";
+        return timer.getFormattedTime(timeLeft);
     }
 
 
-    @Override
-    public void startTask() {
-        DisplayHandler displayHandler = EnhancedTextDisplays.getInstance().getDisplayHandler();
-        for (int i = 0; i < holograms.size(); i++) {
-            MiniTextDisplay holo = holograms.get(i);
-            Location location = chestLocations.get(i);
-            displayHandler.spawnDisplay(holo, location);
-        }
-        super.startTask();
-    }
+//    private void ensureHologramsExists() {
+//        if (isHolosSpawned) {
+//            return;
+//        }
+//        isHolosSpawned = true;
+//        DisplayHandler displayHandler = EnhancedTextDisplays.getInstance().getDisplayHandler();
+//        for (int i = 0; i < holograms.size(); i++) {
+//            MiniTextDisplay holo = holograms.get(i);
+//            Location location = chestLocations.get(i);
+//            displayHandler.spawnDisplay(holo, location);
+//        }
+//    }
 
-    public void fillChests() {
+    private void fillChests() {
         FileConfiguration config = SatanicRaids.getInstance().getConfig();
         List<Map<?, ?>> lootConfig = config.getMapList("loot");
         if (lootConfig.isEmpty()) {

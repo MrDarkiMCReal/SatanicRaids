@@ -7,16 +7,23 @@ import org.mrdarkimc.raidsrecode.events.RunnableEvent;
 
 public class EndTask extends BukkitRunnable {
     private final RunnableEvent event;
+    private Runnable andThen;
 
     public EndTask(RunnableEvent event) {
         this.event = event;
+    }
+    public void afterEnd(Runnable rn){
+        this.andThen = rn;
     }
 
     @Override
     public void run() {
         event.stop();
+        if (andThen!=null){
+            andThen.run();
+        }
     }
     public BukkitTask startTask(){
-        return runTaskLater(SatanicRaids.getInstance(),event.getDuration());
+        return runTaskLater(SatanicRaids.getInstance(),event.getDuration() * 20L);
     }
 }

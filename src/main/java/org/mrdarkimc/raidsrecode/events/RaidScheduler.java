@@ -1,16 +1,13 @@
 package org.mrdarkimc.raidsrecode.events;
 
-import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.mrdarkimc.SatanicLib.messages.KeyedMessage;
+import org.bukkit.scheduler.BukkitTask;
 import org.mrdarkimc.SatanicLib.messages.Message;
 import org.mrdarkimc.raidsrecode.SatanicRaids;
-import org.mrdarkimc.raidsrecode.TaskHelper;
-import org.mrdarkimc.raidsrecode.eventrunner.EventRunner;
+import org.mrdarkimc.raidsrecode.eventrunner.EndTask;
 
 import java.util.ArrayDeque;
 import java.util.List;
-import java.util.Objects;
 import java.util.Queue;
 import java.util.function.Supplier;
 
@@ -23,7 +20,11 @@ public class RaidScheduler implements EventScheduler {
     public RunnableEvent getCurrentRunningEvent() {
         return currentRunningEvent;
     }
-    public long startTime;
+
+    public long schedulerStartTime;
+    public long lastEventRan;
+    //private EventRunner eventRunner = new EventRunner(); //на случай, если нужен forceStop
+    private BukkitTask plannedEndTask;
 
     public RaidScheduler(List<Supplier<RunnableEvent>> events, long delayBetweenEventsInSeconds) {
         this.events = new ArrayDeque<>(events);
@@ -36,13 +37,15 @@ public class RaidScheduler implements EventScheduler {
         if (scheduleTask != null) {
             if (currentRunningEvent == null) {
                 scheduleTask.cancel();
-                new Message(null,"[Raid] Scheduler disabled",null).sendToPlayersWithPermission("satanic.helper");
+                new Message(null, "[SatanicEvents] Scheduler disabled", null).sendToPlayersWithPermission("satanic.helper");
             } else {
-                new Message(null,"[Raid] Scheduler are not disabled",null).sendToPlayersWithPermission("satanic.helper");
-                new Message(null,"[Raid] Disable started event first!",null).sendToPlayersWithPermission("satanic.helper");
+                new Message(null, "[SatanicEvents] Scheduler are not disabled", null).sendToPlayersWithPermission("satanic.helper");
+                new Message(null, "[SatanicEvents] Disable started event first!", null).sendToPlayersWithPermission("satanic.helper");
                 return;
             }
         }
+        long runFirstEventAfterSchedulerStart = between * 20;
+        long delayBetweenInTicks = between * 20;
         scheduleTask = new BukkitRunnable() {
             @Override
             public void run() {
@@ -51,15 +54,15 @@ public class RaidScheduler implements EventScheduler {
                 //return; //todo y not unreacheable?
                 //stopEventTask();
                 // planPreparations();
+                lastEventRan = System.currentTimeMillis();
                 spawnNextEvent();
             }
         };
-        scheduleTask.runTaskTimer(SatanicRaids.getInstance(), between * 20, between * 20);
-        SatanicRaids.getInstance().getLogger().info("Scheduler started");
-        startTime = System.currentTimeMillis();
-    }
-    public void sendMessageToNextEvent(){
-
+        scheduleTask.runTaskTimer(SatanicRaids.getInstance(), runFirstEventAfterSchedulerStart, delayBetweenInTicks);
+        new Message(null, "[SatanicEvents] Scheduler started", null).sendToPlayersWithPermission("satanic.helper");
+        new Message(null, "[SatanicEvents] Количество событий: " + events.size(), null).sendToPlayersWithPermission("satanic.helper");
+        new Message(null, "[SatanicEvents] Эвент будет запущен через " + runFirstEventAfterSchedulerStart / 20 + " сек.", null).sendToPlayersWithPermission("satanic.helper");
+        schedulerStartTime = System.currentTimeMillis();
     }
 
     @Override
@@ -103,8 +106,17 @@ public class RaidScheduler implements EventScheduler {
             new Message(null, "Событие не может длиться дольше, чем будет запущено следующее событие", null).sendToPlayersWithPermission("satanic.helper");
             return;
         }
+        //runnableEvent.start();
+//        currentRunningEvent = runnableEvent;
+//        eventRunner.setEvent(currentRunningEvent); //todo рефактор currentRunningEvent в  eventRunner
+//        RunTask runTask = new RunTask(event);
+//        runTask.startTask();
+
         runnableEvent.start();
-        currentRunningEvent = runnableEvent;
+        EndTask endTask = new EndTask(runnableEvent);
+        endTask.afterEnd(() -> this.currentRunningEvent = null);
+        plannedEndTask = endTask.startTask();
+        //eventRunner.runEvent();
     }
 
 //    private void stopEventTask() {

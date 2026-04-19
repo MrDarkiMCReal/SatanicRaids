@@ -1,12 +1,12 @@
 package org.mrdarkimc.raidsrecode;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.mrdarkimc.SatanicLib.SatanicLib;
 import org.mrdarkimc.SatanicLib.Utils;
 import org.mrdarkimc.SatanicLib.configsetups.Configs;
 import org.mrdarkimc.SatanicLib.worldedit.WeSchemLoader;
 import org.mrdarkimc.raidsrecode.commands.RaidsCommand;
-import org.mrdarkimc.raidsrecode.eventrunner.EventRunner;
 import org.mrdarkimc.raidsrecode.events.RaidScheduler;
 import org.mrdarkimc.raidsrecode.events.RunnableEvent;
 
@@ -28,7 +28,6 @@ public class SatanicRaids extends JavaPlugin {
         return holograms;
     }
 
-    private EventRunner runner;
 
     @Override
     public void onEnable() {
@@ -42,7 +41,9 @@ public class SatanicRaids extends JavaPlugin {
         EventDeserializer eventDeserializer = new EventDeserializer(this, mainConfig, holograms);
         //RunnableEvent raidEvent = eventDeserializer.getEvent("raidworld");
         List<Supplier<RunnableEvent>> events = eventDeserializer.allEvents();
-        RaidScheduler scheduler = new RaidScheduler(events, 3600); //пока хардкод
+        ConfigurationSection eventGlobal = mainConfig.get().getConfigurationSection("event");
+        long scheduleIntervalSec = eventGlobal != null ? eventGlobal.getLong("interval", 3600L) : 3600L;
+        RaidScheduler scheduler = new RaidScheduler(events, scheduleIntervalSec);
      //   scheduler.startSchedule();
 
         getCommand("raids").setExecutor(new RaidsCommand(scheduler));
@@ -146,7 +147,4 @@ public class SatanicRaids extends JavaPlugin {
         return mainConfig;
     }
 
-    public EventRunner getEventRunner() {
-        return runner;
-    }
 }

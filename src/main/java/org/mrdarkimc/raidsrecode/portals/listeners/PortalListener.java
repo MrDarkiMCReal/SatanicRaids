@@ -8,19 +8,17 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.mrdarkimc.raidsrecode.EventListener;
 import org.mrdarkimc.raidsrecode.portals.Portal;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PortalListener implements Listener {
+public class PortalListener extends EventListener {
     private List<Portal> activePortals = new ArrayList<>();
-    private final JavaPlugin plugin;
-
-    private boolean isRegistered = false;
 
     public PortalListener(JavaPlugin plugin) {
-        this.plugin = plugin;
+        super(plugin);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -34,39 +32,32 @@ public class PortalListener implements Listener {
         player.getLocation();
         //todo добавить больше fail fast
         for (Portal activePortal : activePortals) {
-            if (activePortal.isNearToPoral(player)) {
+            if (activePortal.isEnteringPortal(player)) {
                 e.setCancelled(true);
                 activePortal.enter(player);
                 break;
             }
         }
     }
-    public void registerPortal(Portal portal){
-        if (activePortals.contains(portal)){
+
+    public void registerPortal(Portal portal) {
+        if (activePortals.contains(portal)) {
             throw new RuntimeException("Portal already registred");
         }
         activePortals.add(portal);
     }
-    public void unregisterPortal(Portal portal){
-        if (!activePortals.contains(portal)){
+
+    public void unregisterPortal(Portal portal) {
+        if (!activePortals.contains(portal)) {
             throw new RuntimeException("Portal is not registred");
         }
         activePortals.remove(portal);
     }
-    public PortalListener register() {
-        if (!isRegistered) {
-            Bukkit.getPluginManager().registerEvents(this, plugin);
-            isRegistered = true;
-        }
-        return this;
-    }
 
-    // Отключение слушателя (все порталы перестанут работать)
+
+    @Override
     public void unregister() {
-        if (isRegistered) {
-            HandlerList.unregisterAll(this);
-            activePortals.clear();
-            isRegistered = false;
-        }
+        activePortals.clear();
+        super.unregister();
     }
 }

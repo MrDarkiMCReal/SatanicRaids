@@ -53,8 +53,8 @@ public class EventDeserializer {
         double y = sec.getDouble("y", 0);
         double z = sec.getDouble("z", 0);
         if (x == 0 && x == y && x == z) {
-            Bukkit.getLogger().warning("Unnable to create PreparedFinder");
-            return createAsyncFinder(sec);
+            Bukkit.getLogger().warning("Warning. Coordinates is 0 0 0 for prepared portal. Is it okay?");
+            //return createAsyncFinder(sec);
         }
         return new PreparedLocationFinder(new Location(world, x, y, z));
     }
@@ -96,9 +96,12 @@ public class EventDeserializer {
         World world = Bukkit.getWorld(eventSec.getString("paste.pasteLocation.world", "raidWorld"));
         List<Location> spawnPoints = loadSafeLocations(world);
 
-        int interval = globalSec != null ? globalSec.getInt("duration", 3600) : 3600;
-        Bukkit.getLogger().info(String.format("Crating event: %s with duration of %s sec.",eventKey,interval));
-        return new RaidEvent(plugin, eventPasters, spawnPoints, raidIn, raidOut, interval);
+        // Длительность конкретного события — events.<key>.duration (сек).
+        // Раньше читали event.duration, которого в конфиге нет (есть event.interval — интервал планировщика).
+        int durationSeconds = eventSec.getInt("duration",
+                globalSec != null ? globalSec.getInt("duration", 3600) : 3600);
+        Bukkit.getLogger().info(String.format("Creating event: %s with duration %s sec.", eventKey, durationSeconds));
+        return new RaidEvent(plugin, eventPasters, spawnPoints, raidIn, raidOut, durationSeconds);
     }
 
     public Portal getPortal(String path) {

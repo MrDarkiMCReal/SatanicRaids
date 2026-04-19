@@ -1,5 +1,6 @@
 package org.mrdarkimc.raidsrecode.portals;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -12,13 +13,16 @@ import org.mrdarkimc.raidsrecode.TaskHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class RaidPortal implements Portal {
-    private final Random random = new Random();
     private final JavaPlugin plugin;
     private final WePaster paster;
     private final MiniTextDisplay portalTemplate;
+    private final Random random = new Random();
     private final Offset hologramSpawnOffset;
     private final Offset portalEnteranceOffset;
     private final int portalEnteranceRadius = 3;
@@ -26,8 +30,12 @@ public class RaidPortal implements Portal {
     @Deprecated //todo уйти от lifetime в классиках
     private int lifeTime = -1;
     private List<Location> destinationPoints;
-    UpdateHoloTask updateHoloTask;
+    private UpdateHoloTask updateHoloTask;
+
     public BukkitTask undoTask;
+    private Consumer<Player> afterTeleportation = player -> {};
+    private Consumer<Player> beforeTeleportation = player -> {};
+    private Predicate<Player> enterencePredicate = Objects::nonNull;
     private boolean isUndone = false;
 
     public RaidPortal(JavaPlugin plugin, WePaster paster, MiniTextDisplay portalTemplate, Offset holoOffset, Offset entenanceOffset) {
@@ -51,21 +59,19 @@ public class RaidPortal implements Portal {
         this.portalTeleportArea = adjustEnteranceLocation(location);
         updateHoloTask = new UpdateHoloTask(portalTemplate, holoLocation, lifeTime);
 
-        register();
+        //register();
         paster.paste(location);
         updateHoloTask.startTask();
         this.undoTask = new BukkitRunnable() {
             @Override
             public void run() {
-                if (!isUndone) {
+                if (isUndone) {
+                    Bukkit.getLogger().info("Portal is already undone. Do nothing");
                     return;
                 }
                 undo();
             }
-        }.runTaskLater(plugin, lifeTime * 20L
-
-
-        );
+        }.runTaskLater(plugin, lifeTime * 20L);
     }
 
     @Override
@@ -75,8 +81,16 @@ public class RaidPortal implements Portal {
 //        if (undone) {return;} // Если уже отменили, выходим
 //        undone = true;
         TaskHelper.cancelTask(undoTask);
-        unregister();
+        if (updateHoloTask != null) {
+            updateHoloTask.endTask();
+        }
+        //unregister();
         paster.undo();
+    }
+
+    @Override
+    public void afterTeleportation(Consumer<Player> onEnter) {
+        this.afterTeleportation = afterTeleportation.andThen(onEnter);
     }
 
     public void setDuration(int duration) {
@@ -84,14 +98,24 @@ public class RaidPortal implements Portal {
     }
 
     @Override
-    public void enter(Player player) {
+    public boolean enter(Player player) {
+        if (!enterencePredicate.test(player)){
+            return false;
+        }
         int size = destinationPoints.size();
         int i = random.nextInt(0, size);
         Location loc = destinationPoints.get(i);
         player.teleport(loc);
+        if (afterTeleportation != null) {
+            afterTeleportation.accept(player);
+        }
+        return true;
     }
 
     public void addDestinationPoint(Location loc) {
+        if (destinationPoints == null) {
+            destinationPoints = new ArrayList<>();
+        }
         this.destinationPoints.add(loc);
     }
 
@@ -99,13 +123,18 @@ public class RaidPortal implements Portal {
         this.destinationPoints = locations;
     }
 
-    public void register() {
-        //throw new RuntimeException("not implemented yet");
+    @Override
+    public void setTeleportRequirements(Predicate<Player> requirements) {
+        this.enterencePredicate = enterencePredicate.and(requirements);
     }
 
-    public void unregister() {
-        //throw new RuntimeException("not implemented yet");
-    }
+//    public void register() {
+//        //throw new RuntimeException("not implemented yet");
+//    }
+//
+//    public void unregister() {
+//        //throw new RuntimeException("not implemented yet");
+//    }
 
     private Location adjustHologramLocation(Location location) {
         Location clone = location.clone();
@@ -120,9 +149,17 @@ public class RaidPortal implements Portal {
     }
 
     @Override
-    public boolean isNearToPoral(Player player) {
+    public boolean isEnteringPortal(Player player) {
+        if (!portalTeleportArea.getWorld().equals(player.getWorld())) {
+            return false;
+        }
         double distance = player.getLocation().distance(portalTeleportArea) - 1; //-1 т.к игрок стоит на блоке
         return distance <= portalEnteranceRadius;
+    }
+
+    @Override
+    public boolean isAllowedToEnterPortal(Player player) {
+        return false;
     }
 
 

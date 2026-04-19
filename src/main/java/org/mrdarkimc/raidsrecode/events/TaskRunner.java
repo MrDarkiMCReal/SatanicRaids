@@ -9,7 +9,6 @@ public class TaskRunner{
     public TaskRunner(JavaPlugin plugin) {
         this.plugin = plugin;
     }
-
     public void runNext(Runnable r, int delay){
         new BukkitRunnable() {
             @Override

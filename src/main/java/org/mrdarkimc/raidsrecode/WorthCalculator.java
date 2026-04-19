@@ -28,7 +28,7 @@ public class WorthCalculator {
     }
     public Map<Player, Long> getTop(int amount){
         Map<Player, Long> top3 = topPlayersByBalance.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue())
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .limit(amount)
                 .collect(Collectors.toMap((p) -> Bukkit.getPlayer(p.getKey()), Map.Entry::getValue));
         Set<Player> players = top3.keySet();

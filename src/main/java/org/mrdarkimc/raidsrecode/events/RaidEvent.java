@@ -14,45 +14,53 @@ import org.mrdarkimc.SatanicLib.messages.Message;
 import org.mrdarkimc.SatanicLib.worldedit.pasters.WePaster;
 import org.mrdarkimc.enhancedtextdisplays.displays.MiniTextDisplay;
 import org.mrdarkimc.raidsrecode.EventDeserializer;
+import org.mrdarkimc.raidsrecode.EventListener;
 import org.mrdarkimc.raidsrecode.SatanicRaids;
 import org.mrdarkimc.raidsrecode.WorthCalculator;
 import org.mrdarkimc.raidsrecode.finders.AsyncLocationFinder;
 import org.mrdarkimc.raidsrecode.finders.LocationFinder;
 import org.mrdarkimc.raidsrecode.finders.PreparedLocationFinder;
+import org.mrdarkimc.raidsrecode.hooks.we.PasterManager;
+import org.mrdarkimc.raidsrecode.listeners.RaidWorldListener;
 import org.mrdarkimc.raidsrecode.portals.Portal;
 import org.mrdarkimc.raidsrecode.portals.RaidPortal;
 import org.mrdarkimc.raidsrecode.portals.listeners.PortalListener;
 import org.mrdarkimc.raidsrecode.tasks.ChestUpdateTask;
+import org.mrdarkimc.raidsrecode.tasks.ChestUpdater;
 import org.mrdarkimc.raidsrecode.tasks.RaidWorldKillAllTimer;
 
 import java.util.*;
 
-public class RaidEvent implements RunnableEvent {
+public class RaidEvent extends AbstractEvent {
     private static Location staticOutPortalLocation = new Location(Bukkit.getWorld("RaidWorld"), 0, 20, 0); //todo в будущем это можно будет заменить на no static
-    private final JavaPlugin plugin;
     private final WePaster raidWorldPartitionPaster;
     private Location raidWorldLocation = new Location(Bukkit.getWorld("RaidWorld"), 0, 0, 0);
     private final List<Location> raidWorldSafeTeleportPoints;
     private final Portal portalIn;
     private final Portal portalOut;
-    private final int eventDuration;
     private PortalListener portalListener;
+    private EventListener raidWorldListener;
     private final int timeToDeath = 30; //в секундах
+    /** Задержки TaskRunner.runNext(..., delay) в секундах — должны совпадать с вызовами ниже. */
+    private static final int PORTAL_IN_SPAWN_DELAY_SEC = 10;
+    private static final int PORTAL_OUT_SPAWN_DELAY_SEC = 25;
     private WorthCalculator calculator;
-    //private int endTime;
-
     private Location portalLocation;
     private ChestUpdateTask chestUpdateTask;
-    private boolean isInitialized = false;
-    private boolean isEnded = false;
+    private ChestUpdater chestUpdater;
+    private Runnable chestEachSecondTick;
+    private List<Player> visitedPlayers;
+
+
 
     public RaidEvent(JavaPlugin plugin, EventDeserializer.PasteData data, List<Location> raidWorldSafeTeleportPoints, Portal portalIn, Portal portalOut, int eventDuration) {
-        this.plugin = plugin;
+        super(plugin, eventDuration);
         this.raidWorldPartitionPaster = data.paster();
         this.raidWorldSafeTeleportPoints = raidWorldSafeTeleportPoints;
         this.portalIn = portalIn;
         this.portalOut = portalOut;
-        this.eventDuration = eventDuration;
+        this.calculator = new WorthCalculator();
+        this.visitedPlayers = new ArrayList<>();
         //
         LocationFinder finder = data.finder();
         if (finder instanceof PreparedLocationFinder prepared) {
@@ -60,47 +68,62 @@ public class RaidEvent implements RunnableEvent {
         } else {
             plugin.getLogger().warning("RaidEvent should have static location. Actual: " + finder.getClass().getSimpleName() + " Setting default loc: " + raidWorldLocation);
         }
-
+        this.chestUpdater = createChestUpdater();
     }
-    //private PasterManager portalPaster = new SchemPasterManager(); //todo перейти на PasterManager, добавить интерфейсы Undoable Spawnable и еще что то
+    //private PasterManager portalPaster = new SchemPasterManager(); //todo перейти на SpawnManager, добавить интерфейсы Undoable Spawnable и еще что то. next iteration
     //Так же уйти от задач, которые сами себя отменяют
+
 
     //private Clipboard portalClipboard = WGSchemLoader.clipboardMap.get("raidportal.schem");
 
-    @Override
-    public boolean isEnded() {
-        return isEnded;
-    }
-
-    public void checkNotInitialized() {
-        if (isInitialized) {
-            new Message(null, "Эвент уже запущен. Сначала отмените событие", null).sendToPlayersWithPermission("satanic.helper");
-            throw new RuntimeException();
-        }
-        isInitialized = true;
-    }
 
     public void sendAnnounceMessage() {
-
+//за 15 сек до начала
+        new Message(null, "Эвент рейдового мира скоро заспавнится", null).broadcast();
     }
 
+    private void markAsVisitedRaidWorld(Player player) {
+        visitedPlayers.add(player);
+    }
+
+    private boolean hadNotVisitedRaidWorld(Player player) {
+        return !visitedPlayers.contains(player);
+    }
 
     @Override
     public void start() {
-        this.calculator = new WorthCalculator();
         checkNotInitialized();
-        TaskRunner runner = new TaskRunner(plugin);
+        setRunningStatus();
+        eventTimer.startTask();
+
+        portalIn.afterTeleportation(p -> calculator.calculateJoin(p));
+        portalIn.afterTeleportation(this::markAsVisitedRaidWorld);
+        portalIn.setTeleportRequirements(this::hadNotVisitedRaidWorld);
+
+        portalOut.afterTeleportation(p -> calculator.calculateExit(p));
+
+
+        //eventTimer.addEachSecondUpdateTask(() -> chestUpdater.nextSecound(eventTimer));
+
+
+
         //prepareLocationAndSpawnRaidWorld();
         //sendAnnounceMessage();
         //registerPortalListener();
         //todo переделать на обьекты типа EventAction и просто собирать их в мапу EventAction / time
-        runner.runNext(this::sendAnnounceMessage, 0); //сразу
-        runner.runNext(this::prepareLocationAndSpawnRaidWorld, 0);
-        runner.runNext(this::registerPortalListener, 0);
-        runner.runNext(this::startHoloUpdateTask, 0);
-        runner.runNext(this::spawnPortalIn, 10);//15 сек
-        runner.runNext(this::spawnPortalOut, 25);//15 сек
-        runner.runNext(this::announceEventSpawned, 15);//15 сек
+        //задачи в одинаковый тик не гарантированы.
+        taskRunner.runNext(this::prepareLocationAndSpawnRaidWorld, 0);
+
+        //taskRunner.runNext(this::startHoloUpdateTask, 0); //сразу
+        this.chestEachSecondTick = () -> chestUpdater.nextSecound(eventTimer);
+        taskRunner.runNext(() -> eventTimer.addEachSecondUpdateTask(chestEachSecondTick), 0); //сразу //todo а может не сразу?
+        //taskRunner.runNext(() -> eventTimer.addEachSecondUpdateTask(() -> chestUpdater.nextSecound(eventTimer)), 0); //сразу
+        taskRunner.runNext(this::sendAnnounceMessage, 1); //сразу
+        taskRunner.runNext(this::registerPortalListener, 2); //сразу
+        taskRunner.runNext(this::registerRaidWorldListener, 2); //сразу
+        taskRunner.runNext(this::spawnPortalIn, PORTAL_IN_SPAWN_DELAY_SEC);//10 сек
+        taskRunner.runNext(this::spawnPortalOut, PORTAL_OUT_SPAWN_DELAY_SEC);//25 сек
+        taskRunner.runNext(this::announceEventSpawned, 15);//15 сек
         //todo вот тут просто запланировать таски.
         //таск на аннаунсер, таск на подготовку, еще какие то таски
         //Выделить 1 минуту на подготовку, вставка схем, порталов и т.д
@@ -168,19 +191,22 @@ public class RaidEvent implements RunnableEvent {
 
 
     public void startHoloUpdateTask() {
-        chestUpdateTask = createChestsTask();
-        chestUpdateTask.startTask();
+
+
     }
 
     public void spawnPortalIn() {
-        ((RaidPortal) portalIn).setDuration(eventDuration);
+        // Один общий момент окончания эвента: spawnDelay + lifeTime == eventDuration (см. EndTask).
+        int portalOpenSeconds = Math.max(1, eventDuration - PORTAL_IN_SPAWN_DELAY_SEC);
+        ((RaidPortal) portalIn).setDuration(portalOpenSeconds);
         portalIn.setDestinationPoints(raidWorldSafeTeleportPoints);
         portalIn.spawn(portalLocation);
         portalListener.registerPortal(portalIn);
     }
 
     public void spawnPortalOut() {
-        ((RaidPortal) portalOut).setDuration(eventDuration);
+        int portalOpenSeconds = Math.max(1, eventDuration - PORTAL_OUT_SPAWN_DELAY_SEC);
+        ((RaidPortal) portalOut).setDuration(portalOpenSeconds);
         portalOut.setDestinationPoints(createOverworldSafePoints(portalLocation));
         portalOut.spawn(staticOutPortalLocation);
         portalListener.registerPortal(portalOut);
@@ -246,7 +272,22 @@ public class RaidEvent implements RunnableEvent {
         ConfigurationSection chestHoloConf = holoConfig.getConfigurationSection("textdisplays.templateChest");
         MiniTextDisplay chestHoloTemplate = MiniTextDisplay.fromConfig(chestHoloConf);
         return new ChestUpdateTask(chestHoloTemplate, eventDuration);
+    }
+    public ChestUpdater createChestUpdater() {
+        FileConfiguration holoConfig = SatanicRaids.getInstance().getHologramConfig().get();
+        ConfigurationSection chestHoloConf = holoConfig.getConfigurationSection("textdisplays.templateChest");
+        MiniTextDisplay chestHoloTemplate = MiniTextDisplay.fromConfig(chestHoloConf);
+        return new ChestUpdater(chestHoloTemplate);
 
+    }
+
+    public EventListener registerRaidWorldListener() {
+        if (raidWorldListener != null) {
+            throw new RuntimeException();
+        }
+        raidWorldListener = new RaidWorldListener(plugin);
+        raidWorldListener.register();
+        return raidWorldListener;
     }
 
     public PortalListener registerPortalListener() {
@@ -258,35 +299,41 @@ public class RaidEvent implements RunnableEvent {
         return portalListener;
     }
 
-    public void unregisterPortalListener() {
-        if (portalListener == null) {
-            Bukkit.getLogger().warning("Портал не может быть разрегистрирован т.к он нулл");
+    public void unregisterPortalListener(EventListener listener) {
+        if (listener == null) {
+            Bukkit.getLogger().warning("Слушатель не может быть разрегистрирован т.к он нулл");
             return;
         }
-        portalListener.unregister();
-
+        listener.unregister();
     }
 
 
     @Override
     public void stop() {
         //todo порталы деспавнить тоже в несколько задач?
+        destroyEndPortalBlocks(portalLocation); //больше не пускаем игроков
         new BukkitRunnable() {
 
             @Override
             public void run() {
                 portalOut.undo();
                 portalIn.undo();
-                portalListener.unregister();
-                unregisterPortalListener();
+                unregisterPortalListener(raidWorldListener);
+                unregisterPortalListener(portalListener);
                 portalListener = null;
-                chestUpdateTask.endTask();
+                raidWorldListener = null;
+                if (chestEachSecondTick != null) {
+                    eventTimer.removeEachSecondUpdateTask(chestEachSecondTick);
+                }
+                if (chestUpdateTask != null) {
+                    chestUpdateTask.endTask();
+                }
                 //delete portals
                 //stop holograms
-                isEnded = true;
+                setEndedStatus();
             }
         }.runTaskLater(plugin, timeToDeath);
-        destroyEndPortalBlocks(portalLocation); //больше не пускаем игроков
+
         RaidWorldKillAllTimer task = new RaidWorldKillAllTimer(staticOutPortalLocation.getWorld(), timeToDeath);
         task.runTaskAndThen(this::fullEnd);
     }

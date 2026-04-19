@@ -1,9 +1,16 @@
 package org.mrdarkimc.raidsrecode.commands;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.mrdarkimc.raidsrecode.SatanicRaids;
 import org.mrdarkimc.raidsrecode.events.EventScheduler;
 import org.mrdarkimc.raidsrecode.events.RaidScheduler;
 import org.mrdarkimc.raidsrecode.events.RunnableEvent;
@@ -16,7 +23,9 @@ public class RaidsCommand implements CommandExecutor {
     public RaidsCommand(EventScheduler event) {
         this.scheduler = event;
     }
+
     final EventScheduler scheduler;
+
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
             sender.sendMessage("§eИспользование: /" + label + " <start|stop|addRespawn|addChest|loot|paste>");
@@ -31,6 +40,12 @@ public class RaidsCommand implements CommandExecutor {
                     return stopSchedule();
                 case "stop":
                     return stopEvent();
+                case "addrespawn":
+                    return this.handleAddPoint(sender, "playerRespawns");
+                case "addchest":
+                    return this.handleAddPoint(sender, "chests");
+                case "loot":
+                    return this.handleLoot(sender);
 //                    case "stop":
 //                    return this.handleStop(sender);
 //                case "addrespawn":
@@ -51,7 +66,8 @@ public class RaidsCommand implements CommandExecutor {
             }
         }
     }
-//    public boolean forceUndo(CommandSender sender){
+
+    //    public boolean forceUndo(CommandSender sender){
 //        SimpleSchemPaster.forceStopAll();
 //        //for (Disableable disableable : Disableable.disableables) {
 //        //    disableable.disable();
@@ -65,27 +81,82 @@ public class RaidsCommand implements CommandExecutor {
 //        worldPaster.pasteAsync((player.getLocation()));
 //        return true;
 //    }
-    public boolean startSchedule(){
+    private boolean handleAddPoint(CommandSender sender, String path) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("§cКоманда только для игрока.");
+            return true;
+        } else {
+            Block target = player.getTargetBlockExact(10);
+            if (target != null && target.getType() != Material.AIR) {
+                Location l = target.getLocation();
+                FileConfiguration cfg = SatanicRaids.getInstance().getConfig();
+                List<Map<?, ?>> list = cfg.getMapList(path);
+                List<Map<String, Object>> mutable = new ArrayList();
+                Iterator var9 = list.iterator();
+
+                while (var9.hasNext()) {
+                    Map<?, ?> m = (Map) var9.next();
+                    Map<String, Object> copy = new LinkedHashMap();
+                    Iterator var12 = m.entrySet().iterator();
+
+                    while (var12.hasNext()) {
+                        Map.Entry<?, ?> e = (Map.Entry) var12.next();
+                        copy.put(String.valueOf(e.getKey()), e.getValue());
+                    }
+
+                    mutable.add(copy);
+                }
+
+                Map<String, Object> entry = new LinkedHashMap();
+                entry.put("x", l.getBlockX());
+                entry.put("y", l.getBlockY());
+                entry.put("z", l.getBlockZ());
+                mutable.add(entry);
+                cfg.set(path, mutable);
+                SatanicRaids.getInstance().saveConfig();
+                player.sendMessage("§aДобавлено в §e" + path + " §a: §f(" + l.getBlockX() + ", " + l.getBlockY() + ", " + l.getBlockZ() + ")");
+                return true;
+            } else {
+                player.sendMessage("§cПосмотрите на блок в пределах 10 блоков.");
+                return true;
+            }
+        }
+    }
+
+    private boolean handleLoot(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("§cКоманда только для игрока.");
+            return true;
+        } else {
+            Inventory inv = Bukkit.createInventory(new LootInventoryHolder(), 54, "Raid Loot Editor");
+            player.openInventory(inv);
+            player.sendMessage("§7Открылось меню редактирования лута. Перетащите предметы и закройте инвентарь.");
+            return true;
+        }
+    }
+
+    public boolean startSchedule() {
         ((RaidScheduler) scheduler).startSchedule();
         return false;
     }
-    public boolean startStartEvent(){
-        RunnableEvent runnableEvent = ((RaidScheduler) scheduler).nextEvent();
-        ((RaidScheduler) scheduler).currentRunningEvent = runnableEvent;
-        runnableEvent.start();
-        return false;
+
+    public boolean startStartEvent() {
+        ((RaidScheduler) scheduler).spawnNextEvent();
+        return true;
     }
-    public boolean stopSchedule(){
+
+    public boolean stopSchedule() {
         ((RaidScheduler) scheduler).stopSchedule();
         //runnableEvent.start();
         return false;
     }
-    public boolean stopEvent(){
+
+    public boolean stopEvent() {
         ((RaidScheduler) scheduler).getCurrentRunningEvent().stop();
         return false;
     }
 
-    public boolean callPrepare(){
+    public boolean callPrepare() {
         return true;
     }
 //    private boolean handlePaste(CommandSender sender){
@@ -148,7 +219,7 @@ public class RaidsCommand implements CommandExecutor {
 ////        }
 //    }
 
-//    private boolean handleStop(CommandSender sender) {
+    //    private boolean handleStop(CommandSender sender) {
 //        if (!this.requirePlayerOrOp(sender)) {
 //            return true;
 //        } else if (SatanicRaids.getInstance().getEventRunner() == null) {
