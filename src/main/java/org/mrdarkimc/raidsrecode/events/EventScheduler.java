@@ -6,4 +6,5 @@ public interface EventScheduler {
     public void startSchedule();
     public void stopSchedule();
     public void stopCurrentEvent();
+    public RunnableEvent getCurrentRunningEvent();
 }

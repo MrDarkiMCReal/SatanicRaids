@@ -23,10 +23,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.mrdarkimc.SatanicLib.messages.Message;
 import org.mrdarkimc.raidsrecode.EventListener;
 
 public class RaidWorldListener extends EventListener {
@@ -37,6 +39,19 @@ public class RaidWorldListener extends EventListener {
         super(plugin);
         this.chestLocation = null;
     }
+
+    @EventHandler
+    public void onCommand(PlayerCommandPreprocessEvent event) {
+        Player player = event.getPlayer();
+        if (player.getWorld().equals(world)) {
+            if (player.hasPermission("satanic.admin")) {
+                return;
+            }
+            event.setCancelled(true);
+            new Message(player, "&cКоманды отключены в рейдовом мире", null).send();
+        }
+    }
+    
 
     @EventHandler
     public void onEntityExplode(EntityExplodeEvent event) {

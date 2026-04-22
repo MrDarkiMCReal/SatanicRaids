@@ -1,6 +1,7 @@
 package org.mrdarkimc.raidsrecode;
 
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.mrdarkimc.SatanicLib.SatanicLib;
 import org.mrdarkimc.SatanicLib.Utils;
@@ -9,6 +10,8 @@ import org.mrdarkimc.SatanicLib.worldedit.WeSchemLoader;
 import org.mrdarkimc.raidsrecode.commands.RaidsCommand;
 import org.mrdarkimc.raidsrecode.events.RaidScheduler;
 import org.mrdarkimc.raidsrecode.events.RunnableEvent;
+import org.mrdarkimc.raidsrecode.listeners.BossbarListener;
+import org.mrdarkimc.raidsrecode.listeners.LootSaveListener;
 
 import java.io.File;
 import java.util.List;
@@ -17,6 +20,7 @@ import java.util.function.Supplier;
 public class SatanicRaids extends JavaPlugin {
     private static SatanicRaids instance;
     private Configs mainConfig;
+    private Configs lootsConfig;
 
     public static SatanicRaids getInstance() {
         return instance;
@@ -28,6 +32,9 @@ public class SatanicRaids extends JavaPlugin {
         return holograms;
     }
 
+    public Configs getLootsConfig() {
+        return lootsConfig;
+    }
 
     @Override
     public void onEnable() {
@@ -37,14 +44,21 @@ public class SatanicRaids extends JavaPlugin {
         WeSchemLoader.loadSchematicsToCache(new File(getDataFolder() + "/schems/"));
         this.mainConfig = Configs.Defaults.setupConfig();
         this.holograms = new Configs("holograms");
+        this.lootsConfig = new Configs("loots");
 
         EventDeserializer eventDeserializer = new EventDeserializer(this, mainConfig, holograms);
         //RunnableEvent raidEvent = eventDeserializer.getEvent("raidworld");
+       // BossBarHandler bossBarHandler = new BossBarHandler(); //просто создаем
+
+        BossbarListener bossbarListener = new BossbarListener();
+
+        getServer().getPluginManager().registerEvents(bossbarListener, this);
+        getServer().getPluginManager().registerEvents(new LootSaveListener(), this);
         List<Supplier<RunnableEvent>> events = eventDeserializer.allEvents();
         ConfigurationSection eventGlobal = mainConfig.get().getConfigurationSection("event");
         long scheduleIntervalSec = eventGlobal != null ? eventGlobal.getLong("interval", 3600L) : 3600L;
         RaidScheduler scheduler = new RaidScheduler(events, scheduleIntervalSec);
-     //   scheduler.startSchedule();
+        //scheduler.startSchedule();
 
         getCommand("raids").setExecutor(new RaidsCommand(scheduler));
     }

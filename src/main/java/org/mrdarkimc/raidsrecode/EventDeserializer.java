@@ -43,6 +43,7 @@ public class EventDeserializer {
 
         pasteStrategies.put("DEFAULT", this::createNormalPaster);
         pasteStrategies.put("PARTITION", this::createPartitionPaster);
+        pasteStrategies.put("RAIDWORLD", this::createRaidWorldPaster);//todo надо добавить поддержку добавления таких методов в общий класс-десерализатор
         locationStrategies.put("ASYNC", this::createAsyncFinder);
         locationStrategies.put("PREPARED", this::createPreparedFinder);
     }
@@ -176,12 +177,21 @@ public class EventDeserializer {
     }
 
     private WePaster createNormalPaster(ConfigurationSection sec, String schemName) {
-        return new WePasterImpl(WeSchemLoader.getClipboard(schemName), null);
+        return new WePasterImpl(WeSchemLoader.getClipboard(schemName), (s) -> s.ignoreAirBlocks(true)); //todo лютый хардкод и хуйня и мне надо надавать по башке. Это надо выносить в конфиг
     }
 
     private WePaster createPartitionPaster(ConfigurationSection sec, String schemName) {
         ConfigurationSection partSec = sec.getConfigurationSection("partition");
         return PartitionWePaster.newBuilder()
+                .usingPlugin(plugin)
+                .withName(schemName)
+                .chunks(partSec != null ? partSec.getInt("chunks") : 4)
+                .interval(partSec != null ? partSec.getLong("delay") : 120L)
+                .build();
+    }
+    private WePaster createRaidWorldPaster(ConfigurationSection sec, String schemName) {
+        ConfigurationSection partSec = sec.getConfigurationSection("partition");
+        return new RaidWorldPaster.RaidWorldPasterBuilder()
                 .usingPlugin(plugin)
                 .withName(schemName)
                 .chunks(partSec != null ? partSec.getInt("chunks") : 4)
@@ -194,11 +204,6 @@ public class EventDeserializer {
         return new Offset(sec.getInt("x"), sec.getInt("y"), sec.getInt("z"));
     }
 
-    private ConfigurationSection createMemorySection(Map<?, ?> map) {
-        MemoryConfiguration temp = new MemoryConfiguration();
-        temp.addDefaults((Map<String, Object>) map);
-        return temp;
-    }
 
     private List<Location> loadSafeLocations(World world) {
         List<Map<?, ?>> spawns = mainConfig.get().getMapList("playerRespawns");

@@ -3,12 +3,14 @@ package org.mrdarkimc.raidsrecode;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.mrdarkimc.SatanicLib.tasks.CountDownTask;
+import org.mrdarkimc.raidsrecode.manager.Undoable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+//todo обьеденить с taskRunner ?
 public class EventTimer extends CountDownTask {
-    private List<Runnable> additionalTasks = new ArrayList<>();
+    private List<TimerTask> additionalTasks = new ArrayList<>();
 
     public EventTimer(JavaPlugin plugin, int totalDuration) {
         super(plugin, totalDuration);
@@ -20,19 +22,22 @@ public class EventTimer extends CountDownTask {
 
     @Override
     public void work() {
-        additionalTasks.forEach(Runnable::run);
+        additionalTasks.forEach((timer) -> timer.nextSecound(this));
+//        Bukkit.getLogger().info("For current event running: " + additionalTasks.size() + " repeatable tasks each second: ");
+//        Bukkit.getLogger().info(additionalTasks.toString());
     }
 
-    public void addEachSecondUpdateTask(Runnable runnable) {
+    public void addEachSecondUpdateTask(TimerTask runnable) {
         additionalTasks.add(runnable);
     }
 
-    public void removeEachSecondUpdateTask(Runnable runnable) {
+    public void removeEachSecondUpdateTask(TimerTask runnable) {
         boolean removed = additionalTasks.remove(runnable);
         if (!removed) {
             Bukkit.getLogger().warning("Attempting to delete repeatable task failed. No tasks were deleted");
         }
     }
+
     public String getFormattedTime() {
         return getFormattedTime(current);
     }
@@ -53,6 +58,12 @@ public class EventTimer extends CountDownTask {
         if (seconds > 0 || sb.length() == 0) sb.append(seconds).append(" сек.");
 
         return sb.toString().trim();
+    }
+
+    @Override
+    public void endTask() {
+        Undoable.undoEach(additionalTasks);
+        super.endTask();
     }
 
     public interface TimerTask { //todo на следующей итерации
