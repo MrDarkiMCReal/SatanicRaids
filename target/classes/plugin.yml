@@ -1,0 +1,15 @@
+name: SatanicRaids
+version: '${project.version}'
+main: org.mrdarkimc.raidsrecode.SatanicRaids
+api-version: '1.21'
+depend:
+  - WorldEdit
+  - WorldGuard
+  - EnhancedTextDisplays
+  - SatanicRespawner
+  - Multiverse-Core
+commands:
+  raids:
+    description: Управление рейдовыми событиями
+    usage: /raids <start|stop|addRespawn|addChest|loot>
+    aliases: [raid]

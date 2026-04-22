@@ -8,6 +8,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.mrdarkimc.SatanicLib.messages.Message;
 import org.mrdarkimc.raidsrecode.EventListener;
 import org.mrdarkimc.raidsrecode.portals.Portal;
 
@@ -33,9 +34,14 @@ public class PortalListener extends EventListener {
         //todo добавить больше fail fast
         for (Portal activePortal : activePortals) {
             if (activePortal.isEnteringPortal(player)) {
+                if (activePortal.isAllowedToEnterPortal(player)) {
+                    activePortal.enter(player);
+                } else {
+                    new Message(player, "В портал можно зайти только 1 раз", null).send();
+                }
                 e.setCancelled(true);
-                activePortal.enter(player);
                 break;
+
             }
         }
     }

@@ -3,13 +3,17 @@ package org.mrdarkimc.raidsrecode.commands;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
+import org.bukkit.boss.KeyedBossBar;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.mrdarkimc.SatanicLib.messages.Message;
+import org.mrdarkimc.raidsrecode.BossBarHandler;
 import org.mrdarkimc.raidsrecode.SatanicRaids;
 import org.mrdarkimc.raidsrecode.events.EventScheduler;
 import org.mrdarkimc.raidsrecode.events.RaidScheduler;
@@ -29,6 +33,7 @@ public class RaidsCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
             sender.sendMessage("§eИспользование: /" + label + " <start|stop|addRespawn|addChest|loot|paste>");
+            requirePlayerOrOp(sender);
             return true;
         } else {
             switch (args[0].toLowerCase(Locale.ROOT)) {
@@ -44,6 +49,8 @@ public class RaidsCommand implements CommandExecutor {
                     return this.handleAddPoint(sender, "playerRespawns");
                 case "addchest":
                     return this.handleAddPoint(sender, "chests");
+                case "killbar":
+                    return this.killbar();
                 case "loot":
                     return this.handleLoot(sender);
 //                    case "stop":
@@ -81,6 +88,13 @@ public class RaidsCommand implements CommandExecutor {
 //        worldPaster.pasteAsync((player.getLocation()));
 //        return true;
 //    }
+    public boolean killbar(){
+        NamespacedKey barKey = BossBarHandler.getInstance().barKey;
+        KeyedBossBar bossBar = Bukkit.getBossBar(barKey);
+        bossBar.removeAll();
+        new Message(null,"killed all raids bossbars",null).sendToPlayersWithPermission("satanic.admin");
+        return true;
+    }
     private boolean handleAddPoint(CommandSender sender, String path) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage("§cКоманда только для игрока.");

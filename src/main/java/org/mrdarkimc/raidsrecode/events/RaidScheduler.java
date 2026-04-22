@@ -49,11 +49,6 @@ public class RaidScheduler implements EventScheduler {
         scheduleTask = new BukkitRunnable() {
             @Override
             public void run() {
-//                if (!isAlreadyLaunched()){
-//                    throw new RuntimeException("Already launched");
-                //return; //todo y not unreacheable?
-                //stopEventTask();
-                // planPreparations();
                 lastEventRan = System.currentTimeMillis();
                 spawnNextEvent();
             }
@@ -99,6 +94,7 @@ public class RaidScheduler implements EventScheduler {
         }
         RunnableEvent runnableEvent = nextEvent();
         if (runnableEvent == null) {
+            new Message(null, "[SatanicRaids] Событие не может запуститься т.к оно null", null).sendToPlayersWithPermission("satanic.helper");
             return;
         }
         int duration = runnableEvent.getDuration();
@@ -106,35 +102,16 @@ public class RaidScheduler implements EventScheduler {
             new Message(null, "Событие не может длиться дольше, чем будет запущено следующее событие", null).sendToPlayersWithPermission("satanic.helper");
             return;
         }
-        //runnableEvent.start();
-//        currentRunningEvent = runnableEvent;
+       currentRunningEvent = runnableEvent;
 //        eventRunner.setEvent(currentRunningEvent); //todo рефактор currentRunningEvent в  eventRunner
 //        RunTask runTask = new RunTask(event);
 //        runTask.startTask();
-
         runnableEvent.start();
         EndTask endTask = new EndTask(runnableEvent);
         endTask.afterEnd(() -> this.currentRunningEvent = null);
         plannedEndTask = endTask.startTask();
         //eventRunner.runEvent();
     }
-
-//    private void stopEventTask() {
-//        // Отменяем предыдущую задачу остановки, если есть
-//        if (stopTask != null) {
-//            stopTask.cancel();
-//        }
-//
-//        stopTask = new BukkitRunnable() {
-//            @Override
-//            public void run() {
-//                isRunning = false;
-//                runner.stopEvent();
-//            }
-//        };
-//        stopTask.runTaskLater(SatanicRaids.getInstance(), activeTime);
-//    }
-
     public RunnableEvent nextEvent() {
         //todo nullchecks etc
         if (events.isEmpty()) {

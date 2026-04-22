@@ -4,54 +4,69 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.mrdarkimc.enhancedtextdisplays.EnhancedTextDisplays;
+import org.jetbrains.annotations.NotNull;
 import org.mrdarkimc.enhancedtextdisplays.displays.MiniTextDisplay;
-import org.mrdarkimc.enhancedtextdisplays.displays.interfaces.DisplayHandler;
 import org.mrdarkimc.raidsrecode.EventTimer;
 import org.mrdarkimc.raidsrecode.SatanicRaids;
+import org.mrdarkimc.raidsrecode.events.RaidEvent;
+import org.mrdarkimc.raidsrecode.manager.Undoable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 //Обновляет голограммы и содержимое сундуков
-public class ChestUpdater implements EventTimer.TimerTask {
+//todo убрать листы с класса, сделать, что бы 1 сундук - 1 класс + 1 голограмма.
+//клиент будет использовать как List
+//todo багулька. Дисплеи не удаляются
+public class ChestUpdater implements EventTimer.TimerTask, Undoable {
     private final List<Location> chestLocations;
     //private final List<MiniTextDisplay> holograms;
+    private final List<EventTimer.TimerTask> hologramUpdaters;
     private final Random random = new Random();
     private final int refillChestTime = 60; //каждую минуту
     private final World world;
-    private boolean isHolosSpawned = false;
-    private List<EventTimer.TimerTask> hologramUpdaters;
+    private boolean isFirstSpawn = true;
+//    private boolean isHolosSpawned = false;
 
 
     public ChestUpdater(MiniTextDisplay chestHoloTemplate) {
 //        super(SatanicRaids.getInstance(), lifetime);
+        this.world = RaidEvent.getRaidWorldLocation().getWorld();
         this.chestLocations = loadChestLocations();
-        this.world = Bukkit.getWorld("RaidWorld");
+        Bukkit.getLogger().info("World for chest Updater: " + world);
         //this.holograms = new ArrayList<>(this.chestLocations.size());
         this.hologramUpdaters = new ArrayList<>();
 
         for (Location chestLocation : this.chestLocations) {
 //            holograms.add(chestHoloTemplate.makeCopy());
+            if (chestLocation == null) {
+                Bukkit.getLogger().warning("Chest location is null! Ignoring this holo updater!!!");
+                continue;
+            }
             HoloUpdater holoUpdater = new HoloUpdater(chestHoloTemplate.makeCopy(), chestLocation, refillChestTime);
             hologramUpdaters.add(holoUpdater);
         }
 
     }
+
     @Override
     public void nextSecound(EventTimer timer) {
         //ensureHologramsExists();
+//        if (isFirstSpawn) {
+//            spawnAndFillChests();
+//            isFirstSpawn = false;
+//        }
         updateHolos(timer);
         if (timer.getCurrentTime() % refillChestTime != 0) {
             return;
         }
-        fillChests();
+        spawnAndFillChests();
     }
 //    public ChestUpdater(World world, MiniTextDisplay chestHoloTemplate) {
 //        //super(SatanicRaids.getInstance(), lifetime);
@@ -62,6 +77,29 @@ public class ChestUpdater implements EventTimer.TimerTask {
 //            holograms.add(chestHoloTemplate.makeCopy());
 //        }
 //    }
+
+    public void spawnAndFillChests() {
+        chestLocations.forEach(loc -> {
+            Bukkit.getLogger().info("spawning chest to: " + loc);
+                    loc.getBlock().setType(Material.CHEST);
+                    create3by3Zone(loc.clone().subtract(0, 1, 0), Material.BEDROCK);
+                }
+        );
+        fillChests();
+    }
+
+    private void create3by3Zone(Location loc, Material blocktype) {
+        int centerX = loc.getBlockX();
+        int centerY = loc.getBlockY();
+        int centerZ = loc.getBlockZ();
+
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                Block block = loc.getWorld().getBlockAt(centerX + x, centerY, centerZ + z);
+                block.setType(blocktype);
+            }
+        }
+    }
 
     private List<Location> loadChestLocations() {
         List<Map<?, ?>> chestsConfig = SatanicRaids.getInstance().getMainConfig().get().getMapList("chests");
@@ -81,13 +119,13 @@ public class ChestUpdater implements EventTimer.TimerTask {
     private void updateHolos(EventTimer timer) {
         hologramUpdaters.forEach(e -> e.nextSecound(timer));
     }
-
-    //todo прикрутить формат времени
-    private void updateHologram(MiniTextDisplay holo, EventTimer eventTimer) {
-        List<String> rawContents = holo.getRawContents();
-        rawContents.replaceAll((s) -> s.replace("{time}", calculateLocalTime(eventTimer)));
-        holo.applyText(rawContents);
-    }
+//
+//    //todo прикрутить формат времени
+//    private void updateHologram(MiniTextDisplay holo, EventTimer eventTimer) {
+//        List<String> rawContents = holo.getRawContents();
+//        rawContents.replaceAll((s) -> s.replace("{time}", calculateLocalTime(eventTimer)));
+//        holo.applyText(rawContents);
+//    }
 
     private String calculateLocalTime(EventTimer timer) {
         int secondsPassedInCurrentCycle = timer.getCurrentTime() % refillChestTime;
@@ -110,20 +148,31 @@ public class ChestUpdater implements EventTimer.TimerTask {
 //    }
 
     private void fillChests() {
-        FileConfiguration config = SatanicRaids.getInstance().getConfig();
-        List<Map<?, ?>> lootConfig = config.getMapList("loot");
-        if (lootConfig.isEmpty()) {
-            return;
+        FileConfiguration config = SatanicRaids.getInstance().getLootsConfig().get();
+        ConfigurationSection itemsSection = config.getConfigurationSection("items");
+
+        if (itemsSection == null) return;
+
+        Set<String> lootKeys = itemsSection.getKeys(false);
+        if (lootKeys.isEmpty()) return;
+
+        List<ItemStack> stackList = new ArrayList<>();
+        for (String s : lootKeys) {
+            ItemStack itemStack = config.getItemStack("items." + s);
+            if (itemStack != null) {
+                stackList.add(itemStack);
+            }
         }
 
+        if (stackList.isEmpty()) return;
+
         for (Location chestLocation : chestLocations) {
-            //System.out.println("Handling chest: " + chestLocation);
             if (chestLocation.getBlock().getType() != Material.CHEST) {
                 continue;
             }
 
             Chest chest = (Chest) chestLocation.getBlock().getState();
-            org.bukkit.inventory.Inventory chestInventory = chest.getInventory();
+            Inventory chestInventory = chest.getInventory();
             chestInventory.clear();
 
             int itemCount = random.nextInt(7) + 3;
@@ -134,33 +183,19 @@ public class ChestUpdater implements EventTimer.TimerTask {
             }
 
             for (int i = 0; i < itemCount && !freeSlots.isEmpty(); i++) {
-                Map<?, ?> randomLoot = lootConfig.get(random.nextInt(lootConfig.size()));
+                ItemStack randomItem = stackList.get(random.nextInt(stackList.size()));
 
-                try {
-                    String materialName = (String) randomLoot.get("material");
-                    Material material = Material.matchMaterial(materialName);
-                    if (material == null) {
-                        continue;
-                    }
+                int randomSlotIndex = random.nextInt(freeSlots.size());
+                int slot = freeSlots.remove(randomSlotIndex);
 
-                    int amount = randomLoot.containsKey("amount") ?
-                            ((Number) randomLoot.get("amount")).intValue() : 1;
-                    if (randomLoot.containsKey("amount-min") && randomLoot.containsKey("amount-max")) {
-                        int min = ((Number) randomLoot.get("amount-min")).intValue();
-                        int max = ((Number) randomLoot.get("amount-max")).intValue();
-                        amount = random.nextInt(max - min + 1) + min;
-                    }
-
-                    ItemStack item = new ItemStack(material, amount);
-
-                    int randomSlotIndex = random.nextInt(freeSlots.size());
-                    int slot = freeSlots.remove(randomSlotIndex);
-
-                    chestInventory.setItem(slot, item);
-                } catch (Exception e) {
-                    Bukkit.getLogger().warning("[EventContainer] Ошибка при заполнении сундука: " + e.getMessage());
-                }
+                chestInventory.setItem(slot, randomItem.clone());
             }
         }
+    }
+
+
+    @Override
+    public void undo() {
+        Undoable.undoEach(hologramUpdaters);
     }
 }
