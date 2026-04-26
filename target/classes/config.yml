@@ -97,6 +97,20 @@ messages:
       - ' '
       - '  %img_miner3% %design_clr_main% Рейд закончен.'
       - ' %design_clr_primary%Никто не выбрался живым...'
+      - ' '
+      - ' '
+  event-end-bonus:
+    variables:
+      1: "первое место"
+      2: "второе место"
+      3: "третье место"
+      other: "участие"
+    enable: true
+    text:
+      - ' '
+      - '  %design_clr_primary%Вы вынесли с рейда &f&r%img_money%%design_clr_money%{raid_amount}'
+      - '  %design_clr_primary%Вам выдана награда &f&r%img_donate-icon%%design_clr_donat-money%{bonus_amount}%design_clr_primary% за %design_clr_main%{place}'
+      - ''
   event-announce-5min:
     enable: true
     text:

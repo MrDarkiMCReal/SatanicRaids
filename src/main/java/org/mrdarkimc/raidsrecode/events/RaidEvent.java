@@ -6,11 +6,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.mrdarkimc.SatanicLib.messages.KeyedMessage;
-import org.mrdarkimc.SatanicLib.messages.Message;
 import org.mrdarkimc.SatanicLib.worldedit.pasters.WePaster;
-import org.mrdarkimc.SatanicLib.worldedit.pasters.WePasterImpl;
 import org.mrdarkimc.enhancedtextdisplays.EnhancedTextDisplays;
 import org.mrdarkimc.enhancedtextdisplays.displays.MiniTextDisplay;
 import org.mrdarkimc.enhancedtextdisplays.displays.interfaces.DisplayHandler;
@@ -19,7 +16,6 @@ import org.mrdarkimc.raidsrecode.EventListener;
 import org.mrdarkimc.raidsrecode.finders.AsyncLocationFinder;
 import org.mrdarkimc.raidsrecode.finders.LocationFinder;
 import org.mrdarkimc.raidsrecode.finders.PreparedLocationFinder;
-import org.mrdarkimc.raidsrecode.listeners.BossbarListener;
 import org.mrdarkimc.raidsrecode.listeners.RaidWorldListener;
 import org.mrdarkimc.raidsrecode.portals.Portal;
 import org.mrdarkimc.raidsrecode.portals.RaidPortal;
@@ -136,7 +132,7 @@ public class RaidEvent extends AbstractEvent {
         taskRunner.runNext(() -> unregisterPortalListener(portalListener), 3);
         taskRunner.runNext(this::killBossbars, 4);
         taskRunner.runNext(this::setEndedStatus, 5);
-        taskRunner.runNext(calculator::broadcastStats, 6);
+        taskRunner.runNext(calculator::giveAwarsAndBroadcastStats, 6);
         taskRunner.runNext(() -> {
             this.calculator = null;
             this.chestUpdater = null;

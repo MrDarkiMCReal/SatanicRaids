@@ -166,7 +166,7 @@ public class RaidsCommand implements CommandExecutor {
     }
 
     public boolean stopEvent() {
-        ((RaidScheduler) scheduler).getCurrentRunningEvent().stop();
+        ((RaidScheduler) scheduler).stopCurrentEvent();
         return false;
     }
 

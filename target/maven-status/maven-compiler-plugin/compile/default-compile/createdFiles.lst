@@ -20,7 +20,6 @@ org\mrdarkimc\raidsrecode\portals\PortalStructure.class
 org\mrdarkimc\raidsrecode\portals\listeners\PortalListener.class
 org\mrdarkimc\raidsrecode\listeners\RaidWorldListener.class
 org\mrdarkimc\raidsrecode\tasks\ChestUpdateTask.class
-org\mrdarkimc\raidsrecode\events\RaidEvent$1.class
 org\mrdarkimc\raidsrecode\eventrunner\RunTask.class
 org\mrdarkimc\raidsrecode\EventTimer$TimerTask.class
 org\mrdarkimc\raidsrecode\events\TaskRunner.class

@@ -8,6 +8,8 @@ depend:
   - EnhancedTextDisplays
   - SatanicRespawner
   - Multiverse-Core
+  - Vault
+  - PlayerPoints
 commands:
   raids:
     description: Управление рейдовыми событиями

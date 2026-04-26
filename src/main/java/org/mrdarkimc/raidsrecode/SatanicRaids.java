@@ -6,6 +6,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.mrdarkimc.SatanicLib.SatanicLib;
 import org.mrdarkimc.SatanicLib.Utils;
 import org.mrdarkimc.SatanicLib.configsetups.Configs;
+import org.mrdarkimc.SatanicLib.currency.PlayerPoints;
+import org.mrdarkimc.SatanicLib.currency.Vault;
+import org.mrdarkimc.SatanicLib.currency.interfaces.Currency;
 import org.mrdarkimc.SatanicLib.worldedit.WeSchemLoader;
 import org.mrdarkimc.raidsrecode.commands.RaidsCommand;
 import org.mrdarkimc.raidsrecode.events.RaidScheduler;
@@ -35,6 +38,16 @@ public class SatanicRaids extends JavaPlugin {
     public Configs getLootsConfig() {
         return lootsConfig;
     }
+    private Currency hellic;
+    private Currency dollar;
+
+    public Currency getHellic() {
+        return hellic;
+    }
+
+    public Currency getDollar() {
+        return dollar;
+    }
 
     @Override
     public void onEnable() {
@@ -45,6 +58,8 @@ public class SatanicRaids extends JavaPlugin {
         this.mainConfig = Configs.Defaults.setupConfig();
         this.holograms = new Configs("holograms");
         this.lootsConfig = new Configs("loots");
+        this.dollar = new Vault();
+        this.hellic = new PlayerPoints();
 
         EventDeserializer eventDeserializer = new EventDeserializer(this, mainConfig, holograms);
         //RunnableEvent raidEvent = eventDeserializer.getEvent("raidworld");
