@@ -1,13 +1,16 @@
 package org.mrdarkimc.raidsrecode.events;
 
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.mrdarkimc.SatanicLib.messages.KeyedMessage;
 import org.mrdarkimc.SatanicLib.messages.Message;
 import org.mrdarkimc.raidsrecode.SatanicRaids;
 import org.mrdarkimc.raidsrecode.eventrunner.EndTask;
 
 import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.function.Supplier;
 
@@ -53,6 +56,7 @@ public class RaidScheduler implements EventScheduler {
                 spawnNextEvent();
             }
         };
+        lastEventRan = System.currentTimeMillis();
         scheduleTask.runTaskTimer(SatanicRaids.getInstance(), runFirstEventAfterSchedulerStart, delayBetweenInTicks);
         new Message(null, "[SatanicEvents] Scheduler started", null).sendToPlayersWithPermission("satanic.helper");
         new Message(null, "[SatanicEvents] Количество событий: " + events.size(), null).sendToPlayersWithPermission("satanic.helper");
@@ -65,9 +69,6 @@ public class RaidScheduler implements EventScheduler {
         if (scheduleTask != null) {
             scheduleTask.cancel();
         }
-//        if (stopTask != null) {
-//            stopTask.cancel();
-//        }
     }
 
     @Override
@@ -103,14 +104,10 @@ public class RaidScheduler implements EventScheduler {
             return;
         }
        currentRunningEvent = runnableEvent;
-//        eventRunner.setEvent(currentRunningEvent); //todo рефактор currentRunningEvent в  eventRunner
-//        RunTask runTask = new RunTask(event);
-//        runTask.startTask();
         runnableEvent.start();
         EndTask endTask = new EndTask(runnableEvent);
         endTask.afterEnd(() -> this.currentRunningEvent = null);
         plannedEndTask = endTask.startTask();
-        //eventRunner.runEvent();
     }
     public RunnableEvent nextEvent() {
         //todo nullchecks etc
@@ -123,4 +120,49 @@ public class RaidScheduler implements EventScheduler {
         events.add(poll);
         return poll.get();
     }
+    public void sendNextEventInfo(Player player) {
+        if (scheduleTask == null || scheduleTask.isCancelled()) {
+            new KeyedMessage(player, "messages.scheduler-disabled", Map.of()).send();
+            return;
+        }
+
+        if (events.isEmpty()) {
+            new KeyedMessage(player, "messages.scheduler-empty", Map.of()).send();
+            return;
+        }
+
+        Supplier<RunnableEvent> nextSupplier = events.peek();
+        if (nextSupplier == null) {
+            new KeyedMessage(player, "messages.scheduler-error-null", Map.of()).send();
+            return;
+        }
+
+        String nextEventName = "Следующий рейд";
+
+        long currentTime = System.currentTimeMillis();
+        long betweenInMillis = between * 1000;
+        long timeSinceLastEvent = currentTime - lastEventRan;
+
+        if (lastEventRan == 0) {
+            timeSinceLastEvent = currentTime - schedulerStartTime;
+        }
+
+        long timeRemainingInSeconds = (betweenInMillis - timeSinceLastEvent) / 1000;
+        if (timeRemainingInSeconds < 0) {
+            timeRemainingInSeconds = 0;
+        }
+
+        Map<String, String> placeholders = Map.of(
+                "{next_event}", nextEventName,
+                "{time}", String.valueOf(timeRemainingInSeconds)
+        );
+
+        if (currentRunningEvent != null && !currentRunningEvent.isEnded()) {
+            new KeyedMessage(player, "messages.scheduler-info-running", placeholders).send();
+        } else {
+            new KeyedMessage(player, "messages.scheduler-info-waiting", placeholders).send();
+        }
+    }
+
+
 }

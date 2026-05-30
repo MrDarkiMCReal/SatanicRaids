@@ -1,12 +1,17 @@
 package org.mrdarkimc.raidsrecode.events;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.mrdarkimc.SatanicLib.messages.Message;
 import org.mrdarkimc.raidsrecode.EventListener;
 import org.mrdarkimc.raidsrecode.EventTimer;
+import org.mrdarkimc.raidsrecode.finders.AsyncLocationFinder;
+import org.mrdarkimc.raidsrecode.finders.LocationFinder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public abstract class AbstractEvent implements RunnableEvent {
     protected final JavaPlugin plugin;
@@ -15,7 +20,9 @@ public abstract class AbstractEvent implements RunnableEvent {
     private boolean isEnded = false;
     protected TaskRunner taskRunner;
     protected EventTimer eventTimer;
+
     protected List<EventListener> listeners;
+    protected Location eventLocation;
 
     protected AbstractEvent(JavaPlugin plugin, int eventDuration) {
         this.plugin = plugin;
@@ -28,10 +35,12 @@ public abstract class AbstractEvent implements RunnableEvent {
     protected void setRunningStatus() {
         isInitialized = true;
     }
-    protected void registerListeners(){
+
+    protected void registerListeners() {
         listeners.forEach(EventListener::register);
     }
-    protected void unregisterListeners(){
+
+    protected void unregisterListeners() {
         listeners.forEach(EventListener::unregister);
     }
 
@@ -42,6 +51,7 @@ public abstract class AbstractEvent implements RunnableEvent {
     protected void setEndedStatus() {
         isEnded = true;
     }
+
     protected void checkNotInitialized() {
         if (isAlreadyRunning()) {
             new Message(null, "[Ошибка] Эвент уже запущен. Сначала отмените событие. Сообщите админу", null).sendToPlayersWithPermission("satanic.helper");
@@ -50,7 +60,27 @@ public abstract class AbstractEvent implements RunnableEvent {
     }
 
     @Override
+    public int getDuration() {
+        return eventDuration;
+    }
+
+    @Override
     public boolean isEnded() {
         return isEnded;
+    }
+
+    protected void prepareLocation(Consumer<Location> onFound) {
+        Location center = new Location(Bukkit.getWorld("world"), 0, 0, 0);
+        LocationFinder asyncFinder = AsyncLocationFinder.newBuilder()
+                .center(center)
+                .maxAttempts(20)
+                .radius(3000)
+                .onFound(onFound)
+                .build();
+        asyncFinder.find();
+    }
+
+    protected void prepareLocation() {
+        prepareLocation(l -> this.eventLocation = l);
     }
 }

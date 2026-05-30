@@ -1,5 +1,9 @@
 package org.mrdarkimc.raidsrecode.events;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
+import net.kyori.adventure.title.TitlePart;
+import net.kyori.adventure.util.Ticks;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
@@ -87,7 +91,13 @@ public class RaidEvent extends AbstractEvent {
         portalIn.afterTeleportation(this::markAsVisitedRaidWorld);
 
         portalIn.setTeleportRequirements(this::hadNotVisitedRaidWorld);
-        portalOut.afterTeleportation(p -> calculator.calculateExit(p));
+        portalOut.afterTeleportation(p -> {
+            calculator.calculateExit(p);
+            p.sendTitlePart(TitlePart.TITLE, Component.text(""));
+            p.sendTitlePart(TitlePart.SUBTITLE, Component.text(""));
+            Title.Times times = Title.Times.times(Ticks.duration(10), Ticks.duration(70), Ticks.duration(10));
+            p.sendTitlePart(TitlePart.TIMES, times);
+        });
 
         taskRunner.runNext(this::prepareLocation, 0);
         taskRunner.runNext(this::clearAllPreviousHolos, 1);
@@ -191,7 +201,8 @@ public class RaidEvent extends AbstractEvent {
         raidWorldPartitionPaster.paste(raidWorldLocation);
     }
 
-    private void prepareLocation() {
+    @Override
+    protected void prepareLocation() {
         Location center = new Location(Bukkit.getWorld("world"), 0, 0, 0);
         LocationFinder asyncFinder = AsyncLocationFinder.newBuilder()
                 .center(center)

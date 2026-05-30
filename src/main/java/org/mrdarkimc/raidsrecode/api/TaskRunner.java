@@ -1,5 +1,6 @@
 package org.mrdarkimc.raidsrecode.events;
 
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -16,6 +17,7 @@ public class TaskRunner {
         this.plugin = plugin;
     }
 
+    /* делай в секундах */
     public void runNext(Runnable r, int delay) {
         BukkitTask bukkitTask = new BukkitRunnable() {
             @Override
@@ -32,5 +34,9 @@ public class TaskRunner {
         }
         taskHistory.clear();
         taskHistory = null;
+    }
+
+    public void killAllRunnedTasks(int time) {
+        Bukkit.getScheduler().runTaskLater(plugin, f -> killAllRunnedTasks(), time);
     }
 }

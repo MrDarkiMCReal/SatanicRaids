@@ -41,7 +41,6 @@ public class FromPointAsyncFinder implements LocationFinder{
         CompletableFuture.supplyAsync(() -> {
             return findLocation(x, z);
         }).thenAccept(loc -> {
-            //Bukkit.getLogger().info("[SatanicEnhancements] Завершено. /backrtp ");
             if (loc == null) {
                 teleportFailure();
             } else {
@@ -55,21 +54,17 @@ public class FromPointAsyncFinder implements LocationFinder{
         if (onFailure!=null){
             onFailure.accept(null);
         }
-        //new Message(player,"не найдена лока",null).send();
-        // new KeyedMessage(player,"modules.death-coords.not-found",null).send();
-
     }
 
     public Location findLocation(int x, int z) {
         int radius = 500;
         for (int i = 0; i < 20; i++) { // 20 попыток для поиска
-            //Bukkit.getLogger().info("[SatanicEnhancements] локация №" + i);
             int xf = ThreadLocalRandom.current().nextInt(x - radius, x + radius);
             int zf = ThreadLocalRandom.current().nextInt(z - radius, z + radius);
             int yf = Bukkit.getWorld("world").getHighestBlockAt(xf, zf).getY();
 
             if (isOptimalPlace(xf, yf, zf)) {
-                return new Location(Bukkit.getWorld("world"), xf, yf+1, zf); // Возвращаем найденную локацию
+                return new Location(Bukkit.getWorld("world"), xf, yf+1, zf);
             }
         }
         return null;
@@ -80,8 +75,6 @@ public class FromPointAsyncFinder implements LocationFinder{
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 Block block = Bukkit.getWorld("world").getBlockAt(x + dx, y, z + dz);
-                //Bukkit.getLogger().info("Проверяю блок по коордам " + (x + dx) + (y) + (z + dz));
-                //Bukkit.getLogger().info("Материал " + block.getType().toString());
                 if (block == null || blocked.contains(block.getType())) {
                     return false;  // Если блок не твердый или это пустой блок, локация не подходит
                 }
