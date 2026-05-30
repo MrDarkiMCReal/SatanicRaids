@@ -1,4 +1,4 @@
-package org.mrdarkimc.raidsrecode.events;
+package org.mrdarkimc.raidsrecode.api;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;

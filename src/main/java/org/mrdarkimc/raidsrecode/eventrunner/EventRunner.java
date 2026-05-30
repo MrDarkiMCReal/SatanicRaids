@@ -3,7 +3,7 @@ package org.mrdarkimc.raidsrecode.eventrunner;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
 import org.mrdarkimc.raidsrecode.TaskHelper;
-import org.mrdarkimc.raidsrecode.events.RunnableEvent;
+import org.mrdarkimc.raidsrecode.api.RunnableEvent;
 
 public class EventRunner {
     //    private int currentIndex = 0;

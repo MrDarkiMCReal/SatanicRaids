@@ -38,7 +38,7 @@ public class RaidWorldKillAllTimer extends BukkitRunnable {
 
     @Override
     public void run() {
-        if ((initialTimeToDeath/3) == timeToDeath) {
+        if ((initialTimeToDeath / 3) == timeToDeath) {
             startKillingPlayersTask();
         }
         if (timeToDeath <= 0) {
@@ -73,7 +73,7 @@ public class RaidWorldKillAllTimer extends BukkitRunnable {
         }
         List<Player> players = raidWorld.getPlayers();
         for (Player player : players) {
-            player.sendTitle(" ", Utils.hexAndPAPI("%design_clr_main%Спасайся через портал или умри", player), 10, initialTimeToDeath/3 * 20, 20);
+            player.sendTitle(" ", Utils.hexAndPAPI("%design_clr_main%Спасайся через портал или умри", player), 10, initialTimeToDeath / 3 * 20, 20);
         }
         new BukkitRunnable() {
             double damage = 1;
@@ -85,6 +85,9 @@ public class RaidWorldKillAllTimer extends BukkitRunnable {
                     cancel();
                 }
                 if (damage >= 687194767) {
+                    for (Player player : players) {
+                        player.damage(200);
+                    }
                     cancel();
                 }
                 for (Player player : players) {

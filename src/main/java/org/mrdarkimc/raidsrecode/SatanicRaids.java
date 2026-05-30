@@ -1,7 +1,6 @@
 package org.mrdarkimc.raidsrecode;
 
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.mrdarkimc.SatanicLib.SatanicLib;
 import org.mrdarkimc.SatanicLib.Utils;
@@ -10,9 +9,9 @@ import org.mrdarkimc.SatanicLib.currency.PlayerPoints;
 import org.mrdarkimc.SatanicLib.currency.Vault;
 import org.mrdarkimc.SatanicLib.currency.interfaces.Currency;
 import org.mrdarkimc.SatanicLib.worldedit.WeSchemLoader;
+import org.mrdarkimc.raidsrecode.api.SchedulerImpl;
 import org.mrdarkimc.raidsrecode.commands.RaidsCommand;
-import org.mrdarkimc.raidsrecode.events.RaidScheduler;
-import org.mrdarkimc.raidsrecode.events.RunnableEvent;
+import org.mrdarkimc.raidsrecode.api.RunnableEvent;
 import org.mrdarkimc.raidsrecode.listeners.BossbarListener;
 import org.mrdarkimc.raidsrecode.listeners.LootSaveListener;
 
@@ -38,8 +37,10 @@ public class SatanicRaids extends JavaPlugin {
     public Configs getLootsConfig() {
         return lootsConfig;
     }
+
     private Currency hellic;
     private Currency dollar;
+    private SchedulerImpl scheduler;
 
     public Currency getHellic() {
         return hellic;
@@ -61,23 +62,31 @@ public class SatanicRaids extends JavaPlugin {
         this.dollar = new Vault();
         this.hellic = new PlayerPoints();
 
-        EventDeserializer eventDeserializer = new EventDeserializer(this, mainConfig, holograms);
-        //RunnableEvent raidEvent = eventDeserializer.getEvent("raidworld");
-       // BossBarHandler bossBarHandler = new BossBarHandler(); //просто создаем
 
-        BossbarListener bossbarListener = new BossbarListener();
-
-        getServer().getPluginManager().registerEvents(bossbarListener, this);
-        getServer().getPluginManager().registerEvents(new LootSaveListener(), this);
-        List<Supplier<RunnableEvent>> events = eventDeserializer.allEvents();
-        ConfigurationSection eventGlobal = mainConfig.get().getConfigurationSection("event");
-        long scheduleIntervalSec = eventGlobal != null ? eventGlobal.getLong("interval", 3600L) : 3600L;
-        RaidScheduler scheduler = new RaidScheduler(events, scheduleIntervalSec);
         //scheduler.startSchedule();
-
+        generateWorkflow();
         getCommand("raids").setExecutor(new RaidsCommand(scheduler));
     }
 
+    private void reloadAllConfigs() {
+        mainConfig.reloadConfig();
+        holograms.reloadConfig();
+        lootsConfig.reloadConfig();
+    }
+
+    private void generateWorkflow() {
+        EventDeserializer eventDeserializer = new EventDeserializer(this, mainConfig, holograms);
+        List<Supplier<RunnableEvent>> events = eventDeserializer.allEvents();
+
+
+        BossbarListener bossbarListener = new BossbarListener();
+        getServer().getPluginManager().registerEvents(bossbarListener, this);
+        getServer().getPluginManager().registerEvents(new LootSaveListener(), this);
+
+        ConfigurationSection eventGlobal = mainConfig.get().getConfigurationSection("event");
+        long scheduleIntervalSec = eventGlobal != null ? eventGlobal.getLong("interval", 3600L) : 3600L;
+        scheduler = new SchedulerImpl(events, scheduleIntervalSec);
+    }
 //    public RunnableEvent createEvent(String name) {
 //        Portal raidInPortal = createPortal("raidInPortal");
 //        Portal raidOutPortal = createPortal("raidOutPortal");

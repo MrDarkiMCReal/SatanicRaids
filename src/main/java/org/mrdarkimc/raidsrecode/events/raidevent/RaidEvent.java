@@ -1,4 +1,4 @@
-package org.mrdarkimc.raidsrecode.events;
+package org.mrdarkimc.raidsrecode.events.raidevent;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
@@ -17,6 +17,7 @@ import org.mrdarkimc.enhancedtextdisplays.displays.MiniTextDisplay;
 import org.mrdarkimc.enhancedtextdisplays.displays.interfaces.DisplayHandler;
 import org.mrdarkimc.raidsrecode.*;
 import org.mrdarkimc.raidsrecode.EventListener;
+import org.mrdarkimc.raidsrecode.api.AbstractEvent;
 import org.mrdarkimc.raidsrecode.finders.AsyncLocationFinder;
 import org.mrdarkimc.raidsrecode.finders.LocationFinder;
 import org.mrdarkimc.raidsrecode.finders.PreparedLocationFinder;

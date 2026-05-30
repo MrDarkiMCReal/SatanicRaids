@@ -1,4 +1,4 @@
-package org.mrdarkimc.raidsrecode.events;
+package org.mrdarkimc.raidsrecode.api;
 
 public interface RunnableEvent {
     public abstract boolean isEnded();

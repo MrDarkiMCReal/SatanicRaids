@@ -65,7 +65,7 @@ public class RaidPortal implements Portal, Undoable {
         for (int x = centerX - 1; x <= centerX + 1; x++) {
             for (int z = centerZ - 1; z <= centerZ + 1; z++) {
                 Location blockLocation = new Location(world, x, centerY, z);
-                blockLocation.getBlock().setType(Material.AIR);
+                blockLocation.getBlock().setType(Material.OBSIDIAN);
             }
         }
     }

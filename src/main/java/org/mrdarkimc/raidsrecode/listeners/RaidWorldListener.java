@@ -7,6 +7,7 @@ import org.bukkit.event.Listener;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -24,11 +25,15 @@ import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.mrdarkimc.SatanicLib.messages.KeyedMessage;
 import org.mrdarkimc.SatanicLib.messages.Message;
+import org.mrdarkimc.SatanicRespawner.SatanicRespawner;
+import org.mrdarkimc.SatanicRespawner.services.RespawnerService;
 import org.mrdarkimc.raidsrecode.EventListener;
 
 public class RaidWorldListener extends EventListener {
@@ -48,10 +53,22 @@ public class RaidWorldListener extends EventListener {
                 return;
             }
             event.setCancelled(true);
-            new Message(player, "&cКоманды отключены в рейдовом мире", null).send();
+            new KeyedMessage(player, "messages.no-commands", null).send();
         }
     }
-    
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        Player leftPlayer = event.getPlayer();
+        World playerWorld = leftPlayer.getWorld();
+        if (playerWorld.getName().equals(world.getName())) {
+            RespawnerService respawnerService = SatanicRespawner.getInstance().getRespawnerService();
+            respawnerService.fakeKillAndRespawn(leftPlayer);
+            new KeyedMessage(null, "messages.death-by-quit", Map.of("{player}", leftPlayer.getName())).broadcast();
+        }
+
+    }
+
 
     @EventHandler
     public void onEntityExplode(EntityExplodeEvent event) {

@@ -10,11 +10,10 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
 import org.mrdarkimc.enhancedtextdisplays.displays.MiniTextDisplay;
 import org.mrdarkimc.raidsrecode.EventTimer;
 import org.mrdarkimc.raidsrecode.SatanicRaids;
-import org.mrdarkimc.raidsrecode.events.RaidEvent;
+import org.mrdarkimc.raidsrecode.events.raidevent.RaidEvent;
 import org.mrdarkimc.raidsrecode.manager.Undoable;
 
 import java.util.*;

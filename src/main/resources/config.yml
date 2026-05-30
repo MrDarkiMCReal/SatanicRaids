@@ -70,6 +70,18 @@ events: # в секундах
     time-to-death: 30 # Время до смерти после окончания события (в секундах)
 # Сообщения
 messages:
+  no-commands:
+    enable: true
+    text:
+      - ' '
+      - '%design_clr_primary%Команды в рейде %design_clr_main%отключены.'
+      - ' '
+  already-met:
+    enable: true
+    text:
+      - ' '
+      - '%design_clr_primary%Рейд можно посетить только %design_clr_main%1 раз.'
+      - ' '
   time-to-death:
     enable: true
     text:
@@ -100,11 +112,11 @@ messages:
     text:
       - ' '
       - '  %img_miner3% %design_clr_main% Рейд закончен.'
-      - '             %design_clr_primary%Никто не выбрался живым...'
+      - '%design_clr_primary%             Никто не выбрался живым...'
       - ' '
       - ' '
   event-end-bonus:
-    variables:
+    variables: #todo обернуть это все в тег place
       1: "первое место"
       2: "второе место"
       3: "третье место"
@@ -121,6 +133,37 @@ messages:
       - ' '
       - '%design_clr_primary%Рейд начнется через %design_clr_main%5 минут!'
       - ' '
+### SCHEDULER
+  scheduler-disabled:
+    enable: true
+    text:
+      - ' &cПланировщик событий в данный момент остановлен.'
+  scheduler-empty:
+    enable: true
+    text:
+      - ' &cВ очереди нет запланированных событий.'
+  scheduler-error-null:
+    enable: true
+    text:
+      - ' &cОшибка: следующее событие повреждено (null).'
+
+  # Когда событие уже идет
+  scheduler-info-running:
+    enable: true
+    text:
+      - ' '
+      - '  %design_clr_primary%Сейчас идет событие!'
+      - '  %design_clr_primary%До следующего (%design_clr_main%{next_event}%design_clr_primary%): &b{time} сек.'
+      - ' '
+
+  # Когда сервер просто ожидает запуска следующего события
+  scheduler-info-waiting:
+    enable: true
+    text:
+      - ' '
+      - '  %design_clr_primary%Следующее событие (%design_clr_main%{next_event}%design_clr_primary%) начнется через: &b{time} сек.'
+      - ' '
+
 # Точки спавна игроков в эвентовом мире
 playerRespawns:
   - x: -33

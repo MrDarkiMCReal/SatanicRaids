@@ -71,8 +71,8 @@ public final class SatanicRaids extends JavaPlugin {
 //    @Override
 //    public void onDisable() {
 //        // Останавливаем расписание
-//        if (scheduler instanceof RaidScheduler) {
-//            ((RaidScheduler) scheduler).stop();
+//        if (scheduler instanceof SchedulerImpl) {
+//            ((SchedulerImpl) scheduler).stop();
 //        }
 //
 //        if (eventWorld != null) {
@@ -153,7 +153,7 @@ public final class SatanicRaids extends JavaPlugin {
 //        this.eventRunner = eventRunner;
 //
 //
-//        scheduler = new RaidScheduler(interval, duration, eventRunner);
+//        scheduler = new SchedulerImpl(interval, duration, eventRunner);
 //
 //        getLogger().info("Компоненты успешно инициализированы!");
 //        getLogger().info("Интервал между событиями: " + (interval / 20 / 60) + " минут");

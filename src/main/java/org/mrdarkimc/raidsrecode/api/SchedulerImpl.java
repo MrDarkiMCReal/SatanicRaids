@@ -1,4 +1,4 @@
-package org.mrdarkimc.raidsrecode.events;
+package org.mrdarkimc.raidsrecode.api;
 
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.function.Supplier;
 
-public class RaidScheduler implements EventScheduler {
+public class SchedulerImpl implements EventScheduler {
     private final Queue<Supplier<RunnableEvent>> events;
     private final long between; // Интервал между событиями в секундах
     private BukkitRunnable scheduleTask;
@@ -29,7 +29,7 @@ public class RaidScheduler implements EventScheduler {
     //private EventRunner eventRunner = new EventRunner(); //на случай, если нужен forceStop
     private BukkitTask plannedEndTask;
 
-    public RaidScheduler(List<Supplier<RunnableEvent>> events, long delayBetweenEventsInSeconds) {
+    public SchedulerImpl(List<Supplier<RunnableEvent>> events, long delayBetweenEventsInSeconds) {
         this.events = new ArrayDeque<>(events);
         this.between = delayBetweenEventsInSeconds;
     }

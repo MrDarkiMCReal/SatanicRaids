@@ -15,9 +15,8 @@ import org.bukkit.inventory.Inventory;
 import org.mrdarkimc.SatanicLib.messages.Message;
 import org.mrdarkimc.raidsrecode.BossBarHandler;
 import org.mrdarkimc.raidsrecode.SatanicRaids;
-import org.mrdarkimc.raidsrecode.events.EventScheduler;
-import org.mrdarkimc.raidsrecode.events.RaidScheduler;
-import org.mrdarkimc.raidsrecode.events.RunnableEvent;
+import org.mrdarkimc.raidsrecode.api.EventScheduler;
+import org.mrdarkimc.raidsrecode.api.SchedulerImpl;
 
 import java.util.*;
 
@@ -150,23 +149,23 @@ public class RaidsCommand implements CommandExecutor {
     }
 
     public boolean startSchedule() {
-        ((RaidScheduler) scheduler).startSchedule();
+        ((SchedulerImpl) scheduler).startSchedule();
         return false;
     }
 
     public boolean startStartEvent() {
-        ((RaidScheduler) scheduler).spawnNextEvent();
+        ((SchedulerImpl) scheduler).spawnNextEvent();
         return true;
     }
 
     public boolean stopSchedule() {
-        ((RaidScheduler) scheduler).stopSchedule();
+        ((SchedulerImpl) scheduler).stopSchedule();
         //runnableEvent.start();
         return false;
     }
 
     public boolean stopEvent() {
-        ((RaidScheduler) scheduler).stopCurrentEvent();
+        ((SchedulerImpl) scheduler).stopCurrentEvent();
         return false;
     }
 
