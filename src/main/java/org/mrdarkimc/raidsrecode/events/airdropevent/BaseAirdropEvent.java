@@ -3,8 +3,8 @@ package org.mrdarkimc.raidsrecode.events.airdropevent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.mrdarkimc.raidsrecode.api.AbstractEvent;
 
-public class AirdropEvent extends AbstractEvent {
-    protected AirdropEvent(JavaPlugin plugin, int eventDuration) {
+public class BaseAirdropEvent extends AbstractEvent {
+    protected BaseAirdropEvent(JavaPlugin plugin, int eventDuration) {
         super(plugin, eventDuration);
     }
 
