@@ -11,15 +11,15 @@ import org.mrdarkimc.SatanicLib.currency.Vault;
 import org.mrdarkimc.SatanicLib.currency.interfaces.Currency;
 import org.mrdarkimc.SatanicLib.worldedit.WeSchemLoader;
 import org.mrdarkimc.raidsrecode.api.EventScheduler;
+import org.mrdarkimc.raidsrecode.api.EventSupplier;
 import org.mrdarkimc.raidsrecode.api.SchedulerImpl;
 import org.mrdarkimc.raidsrecode.commands.RaidsCommand;
-import org.mrdarkimc.raidsrecode.api.RunnableEvent;
+import org.mrdarkimc.raidsrecode.events.raidevent.RaidEventSupplier;
 import org.mrdarkimc.raidsrecode.listeners.BossbarListener;
 import org.mrdarkimc.raidsrecode.listeners.LootSaveListener;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Supplier;
 
 public class SatanicRaids extends JavaPlugin {
     private static SatanicRaids instance;
@@ -73,6 +73,8 @@ public class SatanicRaids extends JavaPlugin {
 
         this.schemLoader.loadSchematicsToCache();
 
+        registerEventTypes();
+
         this.scheduler = createScheduler();
         this.scheduler.startSchedule();
         getCommand("raids").setExecutor(new RaidsCommand(scheduler));
@@ -84,9 +86,14 @@ public class SatanicRaids extends JavaPlugin {
         lootsConfig.reloadConfig();
     }
 
+    private void registerEventTypes() {
+        EventDeserializer.register("raid", new RaidEventSupplier());
+        // EventDeserializer.register("airdrop", new AirdropEventSupplier());
+    }
+
     private EventScheduler createScheduler() {
         final EventDeserializer eventDeserializer = new EventDeserializer(this, schemLoader, mainConfig, holograms);
-        final List<Supplier<RunnableEvent>> events = eventDeserializer.allEvents();
+        final List<EventSupplier> events = eventDeserializer.allEvents();
 
         final BossbarListener bossbarListener = new BossbarListener();
         getServer().getPluginManager().registerEvents(bossbarListener, this);

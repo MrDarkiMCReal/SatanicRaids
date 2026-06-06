@@ -9,10 +9,9 @@ import org.mrdarkimc.raidsrecode.SatanicRaids;
 import org.mrdarkimc.raidsrecode.eventrunner.EndTask;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 public class SchedulerImpl implements EventScheduler {
-    private final Queue<Supplier<RunnableEvent>> events;
+    private final Queue<EventSupplier> events;
     private final long between; // Интервал между событиями в секундах
     private BukkitRunnable scheduleTask;
     public RunnableEvent currentRunningEvent;
@@ -26,7 +25,7 @@ public class SchedulerImpl implements EventScheduler {
     //private EventRunner eventRunner = new EventRunner(); //на случай, если нужен forceStop
     private BukkitTask plannedEndTask;
 
-    public SchedulerImpl(List<Supplier<RunnableEvent>> events, long delayBetweenEventsInSeconds) {
+    public SchedulerImpl(List<EventSupplier> events, long delayBetweenEventsInSeconds) {
         this.events = new ArrayDeque<>(events);
         this.between = delayBetweenEventsInSeconds;
     }
@@ -113,7 +112,7 @@ public class SchedulerImpl implements EventScheduler {
             new Message(null, "Не найдено событий, планировщик остановлен", null).sendToPlayersWithPermission("satanic.helper");
             return null;
         }
-        Supplier<RunnableEvent> poll = events.poll();
+        EventSupplier poll = events.poll();
         events.add(poll);
         return poll.get();
     }
@@ -128,13 +127,13 @@ public class SchedulerImpl implements EventScheduler {
             return;
         }
 
-        Supplier<RunnableEvent> nextSupplier = events.peek();
+        EventSupplier nextSupplier = events.peek();
         if (nextSupplier == null) {
             KeyedMessage.of("scheduler-error-null").send(player);
             return;
         }
 
-        String nextEventName = "Следующий эвент";
+        String nextEventName = nextSupplier.getDisplayName() != null ? nextSupplier.getDisplayName() : "Следующий эвент";
 
         long currentTime = System.currentTimeMillis();
         long betweenInMillis = between * 1000;

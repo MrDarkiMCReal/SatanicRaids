@@ -1,4 +1,4 @@
-package org.mrdarkimc.raidsrecode;
+package org.mrdarkimc.raidsrecode.events.raidevent;
 
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.session.PasteBuilder;

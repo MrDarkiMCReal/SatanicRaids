@@ -7,15 +7,13 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.mrdarkimc.SatanicLib.ConfigAPI.Config;
-import org.mrdarkimc.SatanicLib.configsetups.Configs;
 import org.mrdarkimc.SatanicLib.worldedit.WeSchemLoader;
 import org.mrdarkimc.SatanicLib.worldedit.pasters.PartitionWePaster;
 import org.mrdarkimc.SatanicLib.worldedit.pasters.WePaster;
 import org.mrdarkimc.SatanicLib.worldedit.pasters.WePasterImpl;
 import org.mrdarkimc.enhancedtextdisplays.displays.MiniTextDisplay;
 import org.mrdarkimc.raidsrecode.api.EventSupplier;
-import org.mrdarkimc.raidsrecode.events.raidevent.RaidEvent;
-import org.mrdarkimc.raidsrecode.api.RunnableEvent;
+import org.mrdarkimc.raidsrecode.events.raidevent.RaidWorldPaster;
 import org.mrdarkimc.raidsrecode.finders.AsyncLocationFinder;
 import org.mrdarkimc.raidsrecode.finders.LocationFinder;
 import org.mrdarkimc.raidsrecode.finders.PreparedLocationFinder;
@@ -28,16 +26,14 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class EventDeserializer {
+    private static final Map<String, EventSupplier> registry = new HashMap<>();
     private final JavaPlugin plugin;
     private final Config mainConfig;
     private final Config hologramConfig;
     private final WeSchemLoader schemLoader;
-    private static final Map<String, ? extends Deserealizer> eventDeserealizers = new HashMap<>();
-
     private final Map<String, BiFunction<ConfigurationSection, String, WePaster>> pasteStrategies = new HashMap<>();
     private final Map<String, Function<ConfigurationSection, LocationFinder>> locationStrategies = new HashMap<>();
 
@@ -47,101 +43,83 @@ public class EventDeserializer {
         this.hologramConfig = hologramConfig;
         this.schemLoader = schemLoader;
 
-
         pasteStrategies.put("DEFAULT", this::createNormalPaster);
         pasteStrategies.put("PARTITION", this::createPartitionPaster);
-        pasteStrategies.put("RAIDWORLD", this::createRaidWorldPaster);//todo надо добавить поддержку добавления таких методов в общий класс-десерализатор
+        pasteStrategies.put("RAIDWORLD", this::createRaidWorldPaster);
 
         locationStrategies.put("ASYNC", this::createAsyncFinder);
         locationStrategies.put("PREPARED", this::createPreparedFinder);
     }
 
-    private LocationFinder createPreparedFinder(ConfigurationSection sec) {
-        World world = Bukkit.getWorld(sec.getString("world", "world"));
-        double x = sec.getDouble("x", 0);
-        double y = sec.getDouble("y", 0);
-        double z = sec.getDouble("z", 0);
-        if (x == 0 && x == y && x == z) {
-            Bukkit.getLogger().warning("Warning. Coordinates is 0 0 0 for prepared portal. Is it okay?");
-            //return createAsyncFinder(sec);
-        }
-        return new PreparedLocationFinder(new Location(world, x, y, z));
+    public static void register(String type, EventSupplier supplier) {
+        registry.put(type.toLowerCase(Locale.ROOT), supplier);
     }
 
-    private LocationFinder createAsyncFinder(ConfigurationSection sec) {
-        World world = Bukkit.getWorld(sec.getString("world", "world"));
-        Location center = new Location(world, sec.getDouble("x", 0), sec.getDouble("y", 0), sec.getDouble("z", 0));
-
-        return AsyncLocationFinder.newBuilder()
-                .center(center)
-                .radius(sec.getInt("radius", 1000))
-                .maxAttempts(sec.getInt("maxAttempts", 50))
-                //.requireSafeSurface() // вынести в конфиг как список требований
-                //.require3x3WithAirAbove()
-                .onFound(loc -> {
-                    plugin.getLogger().warning("[AsyncLocFinder] Location found: " + loc + " WARNING: this is default consumer! Override it with whenFound method");
-                })
-                .build();
+    public JavaPlugin getPlugin() {
+        return plugin;
     }
 
-    public List<Supplier<RunnableEvent>> allEvents() {
-        List<Supplier<RunnableEvent>> allEvents = new ArrayList<>();
 
-        Set<String> eventSec = mainConfig.get().getConfigurationSection("events").getKeys(false);
-        eventSec.forEach(key -> allEvents.add(() -> getEvent(key)));
-        return allEvents;
-    }
-    private static <T extends Deserealizer> T getByType(String type){
-        return eventDeserealizers.get(type);
-    }
-    @New
-    public List<Supplier<RunnableEvent>> allEvents(){
-        List<Supplier<RunnableEvent>> allEvents = new ArrayList<>();
+    /**
+     * Читает все файлы из папки {@code plugins/<name>/events/}
+     */
+    public List<EventSupplier> allEvents() {
+        List<EventSupplier> result = new ArrayList<>();
+
         Path eventsDir = plugin.getDataFolder().toPath().resolve("events");
-        File[] files = eventsDir.toFile().listFiles(e -> e.getName().endsWith(".yml"));
+        File dir = eventsDir.toFile();
+
+        if (!dir.exists() || !dir.isDirectory()) {
+            plugin.getLogger().warning("[EventDeserializer] Папка events/ не найдена: " + dir.getAbsolutePath());
+            return result;
+        }
+
+        File[] files = dir.listFiles(f -> f.getName().endsWith(".yml"));
+        if (files == null || files.length == 0) {
+            plugin.getLogger().warning("[EventDeserializer] Папка events/ пуста — нет эвентов для загрузки.");
+            return result;
+        }
+
         for (File file : files) {
             Config config = new Config(plugin, file);
-            FileConfiguration configuration = config.get();
-            ConfigurationSection eventSection = configuration.getConfigurationSection("event");
-            if (eventSection==null){
-                plugin.getLogger().warning(String.format("Для эвента: %s не найден обязательный тег event в конфиге", file.getName()));
+            FileConfiguration cfg = config.get();
+
+            ConfigurationSection eventSection = cfg.getConfigurationSection("event");
+            if (eventSection == null) {
+                plugin.getLogger().warning("[EventDeserializer] Файл " + file.getName() + " не содержит секцию 'event'. Пропускаю.");
                 continue;
             }
+
             String type = eventSection.getString("type");
-            String displayName = eventSection.getString("display-name");
-            int duration = eventSection.getInt("duration");
-            RaidDeserealizer deserealizer = Deserealizer.getByType(type);
-            EventSupplier supp = deserealizer.createEventSupplier();
+            if (type == null || type.isBlank()) {
+                plugin.getLogger().warning("[EventDeserializer] Файл " + file.getName() + " не содержит 'event.type'. Пропускаю.");
+                continue;
+            }
+
+            EventSupplier prototype = registry.get(type.toLowerCase(Locale.ROOT));
+            if (prototype == null) {
+                plugin.getLogger().warning("[EventDeserializer] Неизвестный тип эвента '" + type + "' в файле " + file.getName() + ". Зарегистрированные типы: " + registry.keySet());
+                continue;
+            }
+
+            try {
+                EventSupplier supplier = prototype.fromConfig(cfg, this);
+                result.add(supplier);
+                plugin.getLogger().info("[EventDeserializer] Загружен эвент '" + supplier.getDisplayName() + "' (тип: " + type + ") из " + file.getName());
+            } catch (Exception e) {
+                plugin.getLogger().severe("[EventDeserializer] Ошибка при загрузке эвента из " + file.getName() + ": " + e.getMessage());
+                e.printStackTrace();
+            }
         }
-    }
 
-    public RunnableEvent getEvent(String eventKey) {
-        ConfigurationSection eventSec = mainConfig.get().getConfigurationSection("events." + eventKey);
-        ConfigurationSection globalSec = mainConfig.get().getConfigurationSection("event");
-
-        if (eventSec == null) throw new RuntimeException("Event config for " + eventKey + " not found!");
-
-        PasteData eventPasters = getPasteData(eventSec);
-
-        Portal raidIn = getPortal("raidInPortal");
-        Portal raidOut = getPortal("raidOutPortal");
-
-        World world = Bukkit.getWorld(eventSec.getString("paste.pasteLocation.world", "raidWorld"));
-        List<Location> spawnPoints = loadSafeLocations(world);
-
-        // Длительность конкретного события — events.<key>.duration (сек).
-        // Раньше читали event.duration, которого в конфиге нет (есть event.interval — интервал планировщика).
-        int durationSeconds = eventSec.getInt("duration",
-                globalSec != null ? globalSec.getInt("duration", 3600) : 3600);
-        Bukkit.getLogger().info(String.format("Creating event: %s with duration %s sec.", eventKey, durationSeconds));
-        return new RaidEvent(plugin, eventPasters, spawnPoints, raidIn, raidOut, durationSeconds);
+        return result;
     }
 
     public Portal getPortal(String path) {
         ConfigurationSection sec = mainConfig.get().getConfigurationSection("portals." + path);
         if (sec == null) throw new RuntimeException("Portal config " + path + " not found!");
 
-        PasteData pasters = getPasteData(sec); //todo избавиться от этого, сразу ищем paster, на следующем спринте взяться
+        PasteData pasters = getPasteData(sec);
         WePaster paster = pasters.paster();
 
         String holoKey = sec.getString("holo");
@@ -159,31 +137,14 @@ public class EventDeserializer {
         );
     }
 
-    public record PasteData(WePaster paster, LocationFinder finder) {
-    }
-
-    private PasteData getPasteData(ConfigurationSection parentSec) {
-//        List<Map<?, ?>> pastesMaps = parentSec.getMapList("paste");
-//        if (pastesMaps.isEmpty()) {
-//            throw new RuntimeException("Секция 'paste' пуста или отсутствует в " + parentSec.getName());
-//        }
-//
-//        ConfigurationSection pasteSec = createMemorySection(pastesMaps.get(0));
-//
-//        WePaster paster = getWePaster(pasteSec);
-//
-//        ConfigurationSection locSec = pasteSec.getConfigurationSection("pasteLocation");
-//        String locStrategyName = (locSec != null) ? locSec.getString("strategy", "PREPARED").toUpperCase() : "PREPARED";
-//
-//        LocationFinder finder = locationStrategies.getOrDefault(locStrategyName, this::createPreparedFinder)
-//                .apply(locSec);
+    public PasteData getPasteData(ConfigurationSection parentSec) {
         ConfigurationSection pasteSec = parentSec.getConfigurationSection("paste");
-
         if (pasteSec == null) {
             throw new RuntimeException("Секция 'paste' не найдена в " + parentSec.getName());
         }
 
         WePaster paster = getWePaster(pasteSec);
+
         ConfigurationSection locSec = pasteSec.getConfigurationSection("pasteLocation");
         String locStrategyName = (locSec != null)
                 ? locSec.getString("strategy", "PREPARED").toUpperCase()
@@ -191,8 +152,17 @@ public class EventDeserializer {
 
         LocationFinder finder = locationStrategies.getOrDefault(locStrategyName, this::createPreparedFinder)
                 .apply(locSec);
+
         return new PasteData(paster, finder);
     }
+
+    public List<Location> loadSafeLocations(World world) {
+        List<Map<?, ?>> spawns = mainConfig.get().getMapList("playerRespawns");
+        return spawns.stream()
+                .map(m -> new Location(world, (int) m.get("x"), (int) m.get("y"), (int) m.get("z")))
+                .collect(Collectors.toList());
+    }
+
 
     private WePaster getWePaster(ConfigurationSection pasteSec) {
         String strategyName = pasteSec.getString("pasteStrategy", "DEFAULT").toUpperCase();
@@ -209,7 +179,7 @@ public class EventDeserializer {
     }
 
     private WePaster createNormalPaster(ConfigurationSection sec, String schemName) {
-        return new WePasterImpl(schemLoader.getClipboard(schemName), (s) -> s.ignoreAirBlocks(true)); //todo лютый хардкод и хуйня и мне надо надавать по башке. Это надо выносить в конфиг
+        return new WePasterImpl(schemLoader.getClipboard(schemName), (s) -> s.ignoreAirBlocks(true));
     }
 
     private WePaster createPartitionPaster(ConfigurationSection sec, String schemName) {
@@ -232,18 +202,35 @@ public class EventDeserializer {
                 .build();
     }
 
+    private LocationFinder createPreparedFinder(ConfigurationSection sec) {
+        World world = Bukkit.getWorld(sec.getString("world", "world"));
+        double x = sec.getDouble("x", 0);
+        double y = sec.getDouble("y", 0);
+        double z = sec.getDouble("z", 0);
+        if (x == 0 && y == 0 && z == 0) {
+            Bukkit.getLogger().warning("[EventDeserializer] Координаты 0 0 0 для PreparedFinder. Это нормально?");
+        }
+        return new PreparedLocationFinder(new Location(world, x, y, z));
+    }
+
+    private LocationFinder createAsyncFinder(ConfigurationSection sec) {
+        World world = Bukkit.getWorld(sec.getString("world", "world"));
+        Location center = new Location(world, sec.getDouble("x", 0), sec.getDouble("y", 0), sec.getDouble("z", 0));
+
+        return AsyncLocationFinder.newBuilder()
+                .center(center)
+                .radius(sec.getInt("radius", 1000))
+                .maxAttempts(sec.getInt("maxAttempts", 50))
+                .onFound(loc -> plugin.getLogger().warning("[AsyncLocFinder] Найдена локация: " + loc + ". Переопредели onFound через метод whenFound!"))
+                .build();
+    }
+
     private Offset getOffset(ConfigurationSection sec) {
         if (sec == null) return new Offset(0, 0, 0);
         return new Offset(sec.getInt("x"), sec.getInt("y"), sec.getInt("z"));
     }
 
 
-    private List<Location> loadSafeLocations(World world) {
-        List<Map<?, ?>> spawns = mainConfig.get().getMapList("playerRespawns");
-        return spawns.stream()
-                .map(m -> new Location(world, (int) m.get("x"), (int) m.get("y"), (int) m.get("z")))
-                .collect(Collectors.toList());
+    public record PasteData(WePaster paster, LocationFinder finder) {
     }
 }
-
-
