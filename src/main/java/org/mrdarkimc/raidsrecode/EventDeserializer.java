@@ -4,13 +4,16 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.mrdarkimc.SatanicLib.ConfigAPI.Config;
 import org.mrdarkimc.SatanicLib.configsetups.Configs;
 import org.mrdarkimc.SatanicLib.worldedit.WeSchemLoader;
 import org.mrdarkimc.SatanicLib.worldedit.pasters.PartitionWePaster;
 import org.mrdarkimc.SatanicLib.worldedit.pasters.WePaster;
 import org.mrdarkimc.SatanicLib.worldedit.pasters.WePasterImpl;
 import org.mrdarkimc.enhancedtextdisplays.displays.MiniTextDisplay;
+import org.mrdarkimc.raidsrecode.api.EventSupplier;
 import org.mrdarkimc.raidsrecode.events.raidevent.RaidEvent;
 import org.mrdarkimc.raidsrecode.api.RunnableEvent;
 import org.mrdarkimc.raidsrecode.finders.AsyncLocationFinder;
@@ -20,6 +23,8 @@ import org.mrdarkimc.raidsrecode.portals.Offset;
 import org.mrdarkimc.raidsrecode.portals.Portal;
 import org.mrdarkimc.raidsrecode.portals.RaidPortal;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -28,20 +33,25 @@ import java.util.stream.Collectors;
 
 public class EventDeserializer {
     private final JavaPlugin plugin;
-    private final Configs mainConfig;
-    private final Configs hologramConfig;
+    private final Config mainConfig;
+    private final Config hologramConfig;
+    private final WeSchemLoader schemLoader;
+    private static final Map<String, ? extends Deserealizer> eventDeserealizers = new HashMap<>();
 
     private final Map<String, BiFunction<ConfigurationSection, String, WePaster>> pasteStrategies = new HashMap<>();
     private final Map<String, Function<ConfigurationSection, LocationFinder>> locationStrategies = new HashMap<>();
 
-    public EventDeserializer(JavaPlugin plugin, Configs mainConfig, Configs hologramConfig) {
+    public EventDeserializer(JavaPlugin plugin, WeSchemLoader schemLoader, Config mainConfig, Config hologramConfig) {
         this.plugin = plugin;
         this.mainConfig = mainConfig;
         this.hologramConfig = hologramConfig;
+        this.schemLoader = schemLoader;
+
 
         pasteStrategies.put("DEFAULT", this::createNormalPaster);
         pasteStrategies.put("PARTITION", this::createPartitionPaster);
         pasteStrategies.put("RAIDWORLD", this::createRaidWorldPaster);//todo надо добавить поддержку добавления таких методов в общий класс-десерализатор
+
         locationStrategies.put("ASYNC", this::createAsyncFinder);
         locationStrategies.put("PREPARED", this::createPreparedFinder);
     }
@@ -76,9 +86,33 @@ public class EventDeserializer {
 
     public List<Supplier<RunnableEvent>> allEvents() {
         List<Supplier<RunnableEvent>> allEvents = new ArrayList<>();
+
         Set<String> eventSec = mainConfig.get().getConfigurationSection("events").getKeys(false);
         eventSec.forEach(key -> allEvents.add(() -> getEvent(key)));
         return allEvents;
+    }
+    private static <T extends Deserealizer> T getByType(String type){
+        return eventDeserealizers.get(type);
+    }
+    @New
+    public List<Supplier<RunnableEvent>> allEvents(){
+        List<Supplier<RunnableEvent>> allEvents = new ArrayList<>();
+        Path eventsDir = plugin.getDataFolder().toPath().resolve("events");
+        File[] files = eventsDir.toFile().listFiles(e -> e.getName().endsWith(".yml"));
+        for (File file : files) {
+            Config config = new Config(plugin, file);
+            FileConfiguration configuration = config.get();
+            ConfigurationSection eventSection = configuration.getConfigurationSection("event");
+            if (eventSection==null){
+                plugin.getLogger().warning(String.format("Для эвента: %s не найден обязательный тег event в конфиге", file.getName()));
+                continue;
+            }
+            String type = eventSection.getString("type");
+            String displayName = eventSection.getString("display-name");
+            int duration = eventSection.getInt("duration");
+            RaidDeserealizer deserealizer = Deserealizer.getByType(type);
+            EventSupplier supp = deserealizer.createEventSupplier();
+        }
     }
 
     public RunnableEvent getEvent(String eventKey) {
@@ -175,7 +209,7 @@ public class EventDeserializer {
     }
 
     private WePaster createNormalPaster(ConfigurationSection sec, String schemName) {
-        return new WePasterImpl(WeSchemLoader.getClipboard(schemName), (s) -> s.ignoreAirBlocks(true)); //todo лютый хардкод и хуйня и мне надо надавать по башке. Это надо выносить в конфиг
+        return new WePasterImpl(schemLoader.getClipboard(schemName), (s) -> s.ignoreAirBlocks(true)); //todo лютый хардкод и хуйня и мне надо надавать по башке. Это надо выносить в конфиг
     }
 
     private WePaster createPartitionPaster(ConfigurationSection sec, String schemName) {
@@ -187,6 +221,7 @@ public class EventDeserializer {
                 .interval(partSec != null ? partSec.getLong("delay") : 120L)
                 .build();
     }
+
     private WePaster createRaidWorldPaster(ConfigurationSection sec, String schemName) {
         ConfigurationSection partSec = sec.getConfigurationSection("partition");
         return new RaidWorldPaster.RaidWorldPasterBuilder()

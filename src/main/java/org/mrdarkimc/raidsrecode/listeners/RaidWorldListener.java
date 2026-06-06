@@ -1,40 +1,27 @@
 package org.mrdarkimc.raidsrecode.listeners;
 
 import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
-import org.bukkit.block.Container;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.inventory.DoubleChestInventory;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.mrdarkimc.SatanicLib.messages.KeyedMessage;
-import org.mrdarkimc.SatanicLib.messages.Message;
+import org.mrdarkimc.SatanicLib.NotifyAPI.KeyedMessage;
 import org.mrdarkimc.SatanicRespawner.SatanicRespawner;
 import org.mrdarkimc.SatanicRespawner.services.RespawnerService;
 import org.mrdarkimc.raidsrecode.EventListener;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class RaidWorldListener extends EventListener {
     private World world = Bukkit.getWorld("RaidWorld");
@@ -53,7 +40,7 @@ public class RaidWorldListener extends EventListener {
                 return;
             }
             event.setCancelled(true);
-            new KeyedMessage(player, "messages.no-commands", null).send();
+            KeyedMessage.of("no-commands").send(player);
         }
     }
 
@@ -64,7 +51,7 @@ public class RaidWorldListener extends EventListener {
         if (playerWorld.getName().equals(world.getName())) {
             RespawnerService respawnerService = SatanicRespawner.getInstance().getRespawnerService();
             respawnerService.fakeKillAndRespawn(leftPlayer);
-            new KeyedMessage(null, "messages.death-by-quit", Map.of("{player}", leftPlayer.getName())).broadcast();
+            KeyedMessage.of("messages.death-by-quit").withPlaceholders(Map.of("{player}", leftPlayer.getName())).broadcast();
         }
 
     }

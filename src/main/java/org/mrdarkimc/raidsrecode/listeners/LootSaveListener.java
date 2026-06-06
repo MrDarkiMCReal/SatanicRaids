@@ -7,20 +7,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.ItemStack;
-import org.mrdarkimc.SatanicLib.configsetups.Configs;
-
-import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.inventory.ItemStack;
+import org.mrdarkimc.SatanicLib.ConfigAPI.Config;
 import org.mrdarkimc.raidsrecode.SatanicRaids;
 import org.mrdarkimc.raidsrecode.commands.LootInventoryHolder;
-
-//todo зарегать и имплементировать в эвент
-
 
 public class LootSaveListener implements Listener {
 
@@ -30,7 +19,7 @@ public class LootSaveListener implements Listener {
             return;
         }
 
-        Configs lootsConfig = SatanicRaids.getInstance().getLootsConfig();
+        Config lootsConfig = SatanicRaids.getInstance().getLootsConfig();
         FileConfiguration config = lootsConfig.get();
 
         ConfigurationSection itemsSection = config.getConfigurationSection("items");
@@ -40,8 +29,11 @@ public class LootSaveListener implements Listener {
 
         int nextIndex = itemsSection.getKeys(false).stream()
                 .mapToInt(s -> {
-                    try { return Integer.parseInt(s); }
-                    catch (NumberFormatException e) { return 0; }
+                    try {
+                        return Integer.parseInt(s);
+                    } catch (NumberFormatException e) {
+                        return 0;
+                    }
                 })
                 .max().orElse(-1) + 1;
 
@@ -55,7 +47,7 @@ public class LootSaveListener implements Listener {
         }
 
         if (added) {
-            Configs.startAsyncSavingTask(lootsConfig);
+            Config.startAsyncSavingTask(lootsConfig);
         }
     }
 }

@@ -1,0 +1,93 @@
+messages:
+  no-commands:
+    enable: true
+    text:
+      - ' '
+      - '%design_clr_primary%Команды в рейде %design_clr_main%отключены.'
+      - ' '
+  already-met:
+    enable: true
+    text:
+      - ' '
+      - '%design_clr_primary%Рейд можно посетить только %design_clr_main%1 раз.'
+      - ' '
+  time-to-death:
+    enable: true
+    text:
+      - ' '
+      - '%design_clr_primary%У вас осталось %design_clr_main%{time} секунд%design_clr_primary%,
+      чтобы покинуть рейд!'
+      - '%design_clr_primary%Используйте %design_clr_main%энд-портал в центре карты
+      %design_clr_primary%для выхода!'
+      - ' '
+  event-start:
+    enable: true
+    text:
+      - ' '
+      - '  %img_miner3% %design_clr_main%Рейдовый мир появился'
+      - '             %design_clr_primary%Координаты портала %design_clr_main%{location}'
+      - '             %design_clr_primary%Выход только %design_clr_main%через обратный
+      портал'
+      - '             %design_clr_main%Команды отключены'
+      - ' '
+  event-end:
+    enable: true
+    text:
+      - ' '
+      - '  %img_miner3% %design_clr_main% Рейд закончен. Топ игроков: '
+      - '{players}'
+  event-end-empty:
+    enable: true
+    text:
+      - ' '
+      - '  %img_miner3% %design_clr_main% Рейд закончен.'
+      - '%design_clr_primary%             Никто не выбрался живым...'
+      - ' '
+      - ' '
+  event-end-bonus:
+    variables:
+      1: "первое место"
+      2: "второе место"
+      3: "третье место"
+      other: "участие"
+    enable: true
+    text:
+      - ' '
+      - '  %design_clr_primary%Вы вынесли с рейда &f&r%img_money%%design_clr_money%{raid_amount}'
+      - '  %design_clr_primary%Вам выдана награда &f&r%img_donate-icon%%design_clr_donat-money%{bonus_amount}%design_clr_primary% за %design_clr_main%{place}'
+      - ' '
+  event-announce-5min:
+    enable: true
+    text:
+      - ' '
+      - '%design_clr_primary%Рейд начнется через %design_clr_main%5 минут!'
+      - ' '
+  scheduler-disabled:
+    enable: true
+    text:
+      - ' &cПланировщик событий в данный момент остановлен.'
+  scheduler-empty:
+    enable: true
+    text:
+      - ' &cВ очереди нет запланированных событий.'
+  scheduler-error-null:
+    enable: true
+    text:
+      - ' &cОшибка: следующее событие повреждено (null).'
+
+  # Когда событие уже идет
+  scheduler-info-running:
+    enable: true
+    text:
+      - ' '
+      - '  %design_clr_primary%Сейчас идет событие!'
+      - '  %design_clr_primary%До следующего (%design_clr_main%{next_event}%design_clr_primary%): &b{time} сек.'
+      - ' '
+
+  # Когда сервер просто ожидает запуска следующего события
+  scheduler-info-waiting:
+    enable: true
+    text:
+      - ' '
+      - '  %design_clr_primary%Следующее событие (%design_clr_main%{next_event}%design_clr_primary%) начнется через: &b{time} сек.'
+      - ' '

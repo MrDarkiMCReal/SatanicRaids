@@ -5,9 +5,9 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.mrdarkimc.SatanicLib.NotifyAPI.KeyedMessage;
+import org.mrdarkimc.SatanicLib.NotifyAPI.MessageDispatcher;
 import org.mrdarkimc.SatanicLib.Utils;
-import org.mrdarkimc.SatanicLib.messages.KeyedMessage;
-import org.mrdarkimc.SatanicLib.messages.MessageInterface;
 import org.mrdarkimc.SatanicRespawner.SatanicRespawner;
 import org.mrdarkimc.SatanicRespawner.services.RespawnerService;
 import org.mrdarkimc.raidsrecode.SatanicRaids;
@@ -21,7 +21,7 @@ public class RaidWorldKillAllTimer extends BukkitRunnable {
 
     private final World eventWorld;
     private final RespawnerService killService;
-    private final MessageInterface message;
+    private final MessageDispatcher timeToDeathDispatcher;
     private Consumer<Void> consumer;
     private int timeToDeath;
     private final int initialTimeToDeath;
@@ -32,7 +32,7 @@ public class RaidWorldKillAllTimer extends BukkitRunnable {
         this.eventWorld = raidWorld;
         this.initialTimeToDeath = timeToDeath;
         this.timeToDeath = timeToDeath;
-        this.message = new KeyedMessage(null, "messages.time-to-death", Map.of("{time}", String.valueOf(timeToDeath)));
+        this.timeToDeathDispatcher = KeyedMessage.of("time-to-death");
         this.killService = SatanicRespawner.getInstance().getRespawnerService();
     }
 
@@ -45,9 +45,7 @@ public class RaidWorldKillAllTimer extends BukkitRunnable {
             cancelAndConsume();
         }
         if (timeToDeath % 10 == 0 || timeToDeath <= 5) {
-            eventWorld.getPlayers().forEach(e ->
-                    new KeyedMessage(e, "messages.time-to-death", Map.of("{time}", String.valueOf(timeToDeath))).send()
-            );
+            eventWorld.getPlayers().forEach(e -> timeToDeathDispatcher.withPlaceholders(Map.of("{time}", String.valueOf(timeToDeath))).send(e));
         }
 
         timeToDeath--;

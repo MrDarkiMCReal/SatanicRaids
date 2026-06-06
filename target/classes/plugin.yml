@@ -10,6 +10,7 @@ depend:
   - Multiverse-Core
   - Vault
   - PlayerPoints
+  - SatanicLib
 commands:
   raids:
     description: Управление рейдовыми событиями

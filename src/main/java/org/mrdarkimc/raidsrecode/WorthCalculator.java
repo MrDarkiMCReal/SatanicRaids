@@ -3,10 +3,10 @@ package org.mrdarkimc.raidsrecode;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.mrdarkimc.SatanicLib.NotifyAPI.KeyedMessage;
+import org.mrdarkimc.SatanicLib.NotifyAPI.MessageDispatcher;
 import org.mrdarkimc.SatanicLib.Utils;
 import org.mrdarkimc.SatanicLib.currency.interfaces.Currency;
-import org.mrdarkimc.SatanicLib.messages.KeyedMessage;
-import org.mrdarkimc.SatanicLib.messages.MessageInterface;
 import org.mrdarkimc.itemworth.WorthProvider.PriceChecker;
 
 import java.util.*;
@@ -116,7 +116,10 @@ public class WorthCalculator {
             placeholders.put("{bonus_amount}", Currency.formatPrice(bonusHellic));
             placeholders.put("{raid_amount}", Currency.formatPrice((int) raidAmount));
 
-            new KeyedMessage(player, "messages.event-end-bonus", placeholders).send();
+            KeyedMessage.of("event-end-bonus")
+                    .withPlaceholders(placeholders)
+                    .send(player);
+
             rank++;
         }
     }
@@ -125,7 +128,8 @@ public class WorthCalculator {
         Map<UUID, Long> top = this.getTopBalancePlayers(3);
 
         if (top.isEmpty()) {
-            new KeyedMessage(null, "messages.event-end-empty", null).broadcast();
+           KeyedMessage.of("event-end-empty").broadcast();
+
             return;
         }
         String emptyLine = Utils.hexAndPAPI("%design_clr_primary%             ------------", null);
@@ -140,7 +144,8 @@ public class WorthCalculator {
 
         String playersStatus = String.join("\n", lines);
 
-        MessageInterface message = new KeyedMessage(null, "messages.event-end", Map.of("{players}", playersStatus));
+        MessageDispatcher message = KeyedMessage.of("event-end").withPlaceholders(Map.of("{players}", playersStatus));
+
         message.broadcast();
         giveAwards();
     }

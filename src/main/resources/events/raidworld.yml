@@ -7,11 +7,11 @@
 #    schem: raidWorld
 #    chunks: 4
 #    delay: 80 #ticks
-event:
-  type: raid #для понимания какой класс будем десереализировать
-  display-name: "&cРейд"
-bossbar: '&f« %design_clr_main%рейд %design_clr_primary%- коорды: %design_clr_main%{x},
-  {y}, {z} &f»  %design_clr_primary%(%design_clr_main%%time%%design_clr_primary%)'
+#event:
+#  type: raid #для понимания какой класс будем десереализировать
+#  display-name: "&cРейд"
+#bossbar: '&f« %design_clr_main%рейд %design_clr_primary%- коорды: %design_clr_main%{x},
+#  {y}, {z} &f»  %design_clr_primary%(%design_clr_main%%time%%design_clr_primary%)'
 
 portals:
   raidInPortal:
@@ -52,7 +52,11 @@ portals:
       x: 0
       y: 0
       z: 0
-raidworld:
+event:
+  type: raid #для понимания какой класс будем десереализировать
+  display-name: "&cРейд"
+  bossbar: '&f« %design_clr_main%рейд %design_clr_primary%- коорды: %design_clr_main%{x},
+    {y}, {z} &f»  %design_clr_primary%(%design_clr_main%%time%%design_clr_primary%)'
   duration: 1200 # 20 мин
   paste:
     schem: raidWorld
@@ -69,70 +73,6 @@ raidworld:
       z: 0 # если x,y,z = null то рандомные координаты (метод)
   time-to-death: 30 # Время до смерти после окончания события (в секундах)
 
-messages:
-  no-commands:
-    enable: true
-    text:
-      - ' '
-      - '%design_clr_primary%Команды в рейде %design_clr_main%отключены.'
-      - ' '
-  already-met:
-    enable: true
-    text:
-      - ' '
-      - '%design_clr_primary%Рейд можно посетить только %design_clr_main%1 раз.'
-      - ' '
-  time-to-death:
-    enable: true
-    text:
-      - ' '
-      - '%design_clr_primary%У вас осталось %design_clr_main%{time} секунд%design_clr_primary%,
-      чтобы покинуть рейд!'
-      - '%design_clr_primary%Используйте %design_clr_main%энд-портал в центре карты
-      %design_clr_primary%для выхода!'
-      - ' '
-  event-start:
-    enable: true
-    text:
-      - ' '
-      - '  %img_miner3% %design_clr_main%Рейдовый мир появился'
-      - '             %design_clr_primary%Координаты портала %design_clr_main%{location}'
-      - '             %design_clr_primary%Выход только %design_clr_main%через обратный
-      портал'
-      - '             %design_clr_main%Команды отключены'
-      - ' '
-  event-end:
-    enable: true
-    text:
-      - ' '
-      - '  %img_miner3% %design_clr_main% Рейд закончен. Топ игроков: '
-      - '{players}'
-  event-end-empty:
-    enable: true
-    text:
-      - ' '
-      - '  %img_miner3% %design_clr_main% Рейд закончен.'
-      - '%design_clr_primary%             Никто не выбрался живым...'
-      - ' '
-      - ' '
-  event-end-bonus:
-    variables: #todo обернуть это все в тег place
-      1: "первое место"
-      2: "второе место"
-      3: "третье место"
-      other: "участие"
-    enable: true
-    text:
-      - ' '
-      - '  %design_clr_primary%Вы вынесли с рейда &f&r%img_money%%design_clr_money%{raid_amount}'
-      - '  %design_clr_primary%Вам выдана награда &f&r%img_donate-icon%%design_clr_donat-money%{bonus_amount}%design_clr_primary% за %design_clr_main%{place}'
-      - ' '
-  event-announce-5min:
-    enable: true
-    text:
-      - ' '
-      - '%design_clr_primary%Рейд начнется через %design_clr_main%5 минут!'
-      - ' '
 playerRespawns:
   - x: -33
     y: -15

@@ -10,7 +10,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.mrdarkimc.SatanicLib.messages.KeyedMessage;
+import org.mrdarkimc.SatanicLib.NotifyAPI.KeyedMessage;
 import org.mrdarkimc.SatanicLib.worldedit.pasters.WePaster;
 import org.mrdarkimc.enhancedtextdisplays.EnhancedTextDisplays;
 import org.mrdarkimc.enhancedtextdisplays.displays.MiniTextDisplay;
@@ -235,7 +235,7 @@ public class RaidEvent extends AbstractEvent {
         if (portalListener != null) {
             throw new RuntimeException();
         }
-        portalListener = new PortalListener(plugin);
+        portalListener = new PortalListener(plugin, raidWorldLocation.getWorld());
         portalListener.register();
         return portalListener;
     }
@@ -249,7 +249,7 @@ public class RaidEvent extends AbstractEvent {
     }
 
     private void announceEventSpawned() {
-        new KeyedMessage(null, "messages.event-start", Map.of("{location}", formatLocation(portalLocation))).broadcast();
+        KeyedMessage.of("event-start").withPlaceholders(Map.of("{location}", formatLocation(portalLocation))).broadcast();
     }
 
     private void markAsVisitedRaidWorld(Player player) {

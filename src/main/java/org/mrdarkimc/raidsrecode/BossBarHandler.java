@@ -8,12 +8,10 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.mrdarkimc.SatanicLib.ConfigAPI.Config;
 import org.mrdarkimc.SatanicLib.Utils;
-import org.mrdarkimc.SatanicLib.configsetups.Configs;
 import org.mrdarkimc.raidsrecode.listeners.BossbarListener;
 
-import java.util.Map;
 
 //кринжуха но надо сделать быстро
 public class BossBarHandler {
@@ -33,7 +31,7 @@ public class BossBarHandler {
     }
 
     public BossBar createBossbar(Location loc) {
-        Configs mainConfig = SatanicRaids.getInstance().getMainConfig();
+        Config mainConfig = SatanicRaids.getInstance().getMainConfig();
         FileConfiguration config = mainConfig.get();
         String bossbarLine = config.getString("bossbar");
         bossbarLine = Utils.hexAndPAPI(bossbarLine, null);
@@ -43,7 +41,7 @@ public class BossBarHandler {
         return Bukkit.createBossBar(bossbarLine, BarColor.YELLOW, BarStyle.SOLID);
     }
     public void updateText(Location loc){
-        Configs mainConfig = SatanicRaids.getInstance().getMainConfig();
+        Config mainConfig = SatanicRaids.getInstance().getMainConfig();
         FileConfiguration config = mainConfig.get();
         String bossbarLine = config.getString("bossbar");
         bossbarLine = Utils.hexAndPAPI(bossbarLine, null);

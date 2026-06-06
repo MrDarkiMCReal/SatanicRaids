@@ -3,15 +3,12 @@ package org.mrdarkimc.raidsrecode.api;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-import org.mrdarkimc.SatanicLib.messages.KeyedMessage;
+import org.mrdarkimc.SatanicLib.NotifyAPI.KeyedMessage;
 import org.mrdarkimc.SatanicLib.messages.Message;
 import org.mrdarkimc.raidsrecode.SatanicRaids;
 import org.mrdarkimc.raidsrecode.eventrunner.EndTask;
 
-import java.util.ArrayDeque;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.function.Supplier;
 
 public class SchedulerImpl implements EventScheduler {
@@ -122,22 +119,22 @@ public class SchedulerImpl implements EventScheduler {
     }
     public void sendNextEventInfo(Player player) {
         if (scheduleTask == null || scheduleTask.isCancelled()) {
-            new KeyedMessage(player, "messages.scheduler-disabled", Map.of()).send();
+            KeyedMessage.of("scheduler-disabled").send(player);
             return;
         }
 
         if (events.isEmpty()) {
-            new KeyedMessage(player, "messages.scheduler-empty", Map.of()).send();
+            KeyedMessage.of("scheduler-empty").send(player);
             return;
         }
 
         Supplier<RunnableEvent> nextSupplier = events.peek();
         if (nextSupplier == null) {
-            new KeyedMessage(player, "messages.scheduler-error-null", Map.of()).send();
+            KeyedMessage.of("scheduler-error-null").send(player);
             return;
         }
 
-        String nextEventName = "Следующий рейд";
+        String nextEventName = "Следующий эвент";
 
         long currentTime = System.currentTimeMillis();
         long betweenInMillis = between * 1000;
@@ -158,9 +155,9 @@ public class SchedulerImpl implements EventScheduler {
         );
 
         if (currentRunningEvent != null && !currentRunningEvent.isEnded()) {
-            new KeyedMessage(player, "messages.scheduler-info-running", placeholders).send();
+            KeyedMessage.of("scheduler-info-running").withPlaceholders(placeholders).send(player);
         } else {
-            new KeyedMessage(player, "messages.scheduler-info-waiting", placeholders).send();
+            KeyedMessage.of("scheduler-info-waiting").withPlaceholders(placeholders).send(player);
         }
     }
 
