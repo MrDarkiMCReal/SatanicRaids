@@ -26,7 +26,8 @@ import java.util.stream.Collectors;
 public class ChestUpdater implements EventTimer.TimerTask, Undoable {
     private final List<Location> chestLocations;
     //private final List<MiniTextDisplay> holograms;
-    private final List<EventTimer.TimerTask> hologramUpdaters;
+    //private final List<EventTimer.TimerTask> hologramUpdaters;
+    private final List<UndoableTimerMarker> hologramUpdaters;
     private final Random random = new Random();
     private final int refillChestTime = 60; //каждую минуту
     private final World world;
@@ -196,5 +197,7 @@ public class ChestUpdater implements EventTimer.TimerTask, Undoable {
     @Override
     public void undo() {
         Undoable.undoEach(hologramUpdaters);
+    }
+    public static interface UndoableTimerMarker extends EventTimer.TimerTask, Undoable {
     }
 }

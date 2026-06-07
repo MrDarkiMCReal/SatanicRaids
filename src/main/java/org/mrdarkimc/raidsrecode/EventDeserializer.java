@@ -65,8 +65,9 @@ public class EventDeserializer {
      */
     public List<EventSupplier> allEvents() {
         List<EventSupplier> result = new ArrayList<>();
+        String subfolder = "events";
 
-        Path eventsDir = plugin.getDataFolder().toPath().resolve("events");
+        Path eventsDir = plugin.getDataFolder().toPath().resolve(subfolder);
         File dir = eventsDir.toFile();
 
         if (!dir.exists() || !dir.isDirectory()) {
@@ -187,6 +188,7 @@ public class EventDeserializer {
         return PartitionWePaster.newBuilder()
                 .usingPlugin(plugin)
                 .withName(schemName)
+                .setSchemLoader(schemLoader)
                 .chunks(partSec != null ? partSec.getInt("chunks") : 4)
                 .interval(partSec != null ? partSec.getLong("delay") : 120L)
                 .build();
@@ -197,6 +199,7 @@ public class EventDeserializer {
         return new RaidWorldPaster.RaidWorldPasterBuilder()
                 .usingPlugin(plugin)
                 .withName(schemName)
+                .setSchemLoader(schemLoader)
                 .chunks(partSec != null ? partSec.getInt("chunks") : 4)
                 .interval(partSec != null ? partSec.getLong("delay") : 120L)
                 .build();

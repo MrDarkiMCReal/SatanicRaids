@@ -110,7 +110,7 @@ public class RaidEvent extends AbstractEvent {
         taskRunner.runNext(this::announceEventSpawned, 15);//15 сек
         taskRunner.runNext(this::startChestUpdatingTask, 20); //сразу //todo а может не сразу?
         taskRunner.runNext(this::spawnPortalOut, 25);//25 сек
-
+chestUpdater.undo();
         taskRunner.runNext(this::prepareForEndEvent, eventDuration - timeToDeath); //за 60 сек до окончания
     }
 
@@ -249,7 +249,7 @@ public class RaidEvent extends AbstractEvent {
     }
 
     private void announceEventSpawned() {
-        KeyedMessage.of("event-start").withPlaceholders(Map.of("{location}", formatLocation(portalLocation))).broadcast();
+        KeyedMessage.of("raids-event-start").withPlaceholders(Map.of("{location}", formatLocation(portalLocation))).broadcast();
     }
 
     private void markAsVisitedRaidWorld(Player player) {

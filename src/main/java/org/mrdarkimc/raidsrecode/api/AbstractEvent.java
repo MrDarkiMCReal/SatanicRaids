@@ -3,9 +3,7 @@ package org.mrdarkimc.raidsrecode.api;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.mrdarkimc.SatanicLib.ConfigAPI.MessagesConfig;
-import org.mrdarkimc.SatanicLib.NotifyAPI.MessageDispatcher;
-import org.mrdarkimc.SatanicLib.NotifyAPI.messages.chat.ChatMessage;
+import org.mrdarkimc.SatanicLib.NotifyAPI.KeyedMessage;
 import org.mrdarkimc.raidsrecode.EventListener;
 import org.mrdarkimc.raidsrecode.EventTimer;
 import org.mrdarkimc.raidsrecode.finders.AsyncLocationFinder;
@@ -56,7 +54,7 @@ public abstract class AbstractEvent implements RunnableEvent {
 
     protected void checkNotInitialized() {
         if (isAlreadyRunning()) {
-            new MessageDispatcher(new ChatMessage("[Ошибка] Эвент уже запущен. Сначала отмените событие. Сообщите админу")).toHelpers();
+            KeyedMessage.of("scheduler-event-already-started").toHelpers();
             throw new RuntimeException();
         }
     }

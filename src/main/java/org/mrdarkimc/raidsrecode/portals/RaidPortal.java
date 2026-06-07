@@ -1,12 +1,10 @@
 package org.mrdarkimc.raidsrecode.portals;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.mrdarkimc.SatanicLib.worldedit.pasters.WePaster;
 import org.mrdarkimc.enhancedtextdisplays.displays.MiniTextDisplay;
@@ -112,6 +110,7 @@ public class RaidPortal implements Portal, Undoable {
         isUndone = true;
 //        if (undone) {return;} // Если уже отменили, выходим
 //        undone = true;
+        holoUpdater.undo();
         TaskHelper.cancelTask(undoTask);
         timer.removeEachSecondUpdateTask(holoUpdater); //todo вот эта штука почему то не удаляет таску, видимо её нет??
 //        if (updateHoloTask != null) {

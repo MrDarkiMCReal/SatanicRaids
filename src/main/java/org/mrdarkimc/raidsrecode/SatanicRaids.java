@@ -3,6 +3,7 @@ package org.mrdarkimc.raidsrecode;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.mrdarkimc.SatanicLib.ConfigAPI.Config;
+import org.mrdarkimc.SatanicLib.ConfigAPI.McResourceHelper;
 import org.mrdarkimc.SatanicLib.ConfigAPI.MessageLoader;
 import org.mrdarkimc.SatanicLib.ConfigAPI.MessagesConfig;
 import org.mrdarkimc.SatanicLib.Utils;
@@ -18,6 +19,7 @@ import org.mrdarkimc.raidsrecode.events.raidevent.RaidEventSupplier;
 import org.mrdarkimc.raidsrecode.listeners.BossbarListener;
 import org.mrdarkimc.raidsrecode.listeners.LootSaveListener;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -65,6 +67,10 @@ public class SatanicRaids extends JavaPlugin {
         this.holograms = new Config(this, "holograms");
         this.lootsConfig = new Config(this, "loots");
 
+        McResourceHelper resourseHelper = new McResourceHelper(this);
+        resourseHelper.copyResourceFolder("events");
+        resourseHelper.copyResourceFolder("schems");
+
         MessageLoader messageLoader = new MessageLoader(this);
         messageLoader.loadAllLocales();
 
@@ -87,13 +93,22 @@ public class SatanicRaids extends JavaPlugin {
     }
 
     private void registerEventTypes() {
+        //todo вот это кринжуха полная, мы из-вне не сможем зарегать эвент
+        // получается шило на мыло, хардкод остался
         EventDeserializer.register("raid", new RaidEventSupplier());
         // EventDeserializer.register("airdrop", new AirdropEventSupplier());
     }
 
     private EventScheduler createScheduler() {
         final EventDeserializer eventDeserializer = new EventDeserializer(this, schemLoader, mainConfig, holograms);
+
         final List<EventSupplier> events = eventDeserializer.allEvents();
+        int size = events.size();
+        getLogger().info(String.format("Создано %s событий", size));
+        List<String> order = mainConfig.get().getStringList("events");
+
+        events.sort(Comparator.comparingInt(event -> order.indexOf(event.getType())));
+
 
         final BossbarListener bossbarListener = new BossbarListener();
         getServer().getPluginManager().registerEvents(bossbarListener, this);

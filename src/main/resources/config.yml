@@ -1,7 +1,4 @@
-event: # в секундах
-  interval: 3600 # 1 час
+event:
+  interval: 3600 # 1 час между событиями
 events: #список эвентов в их порядке (для SchedulerImpl)
   - raid
-  - airship
-  - hellhound
-  - arena

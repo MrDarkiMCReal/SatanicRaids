@@ -7,11 +7,11 @@
 #    schem: raidWorld
 #    chunks: 4
 #    delay: 80 #ticks
-event:
-  type: raid #для понимания какой класс будем десереализировать
-  display-name: "&cРейд"
-bossbar: '&f« %design_clr_main%рейд %design_clr_primary%- коорды: %design_clr_main%{x},
-  {y}, {z} &f»  %design_clr_primary%(%design_clr_main%%time%%design_clr_primary%)'
+#event:
+#  type: raid #для понимания какой класс будем десереализировать
+#  display-name: "&cРейд"
+#bossbar: '&f« %design_clr_main%рейд %design_clr_primary%- коорды: %design_clr_main%{x},
+#  {y}, {z} &f»  %design_clr_primary%(%design_clr_main%%time%%design_clr_primary%)'
 
 portals:
   raidInPortal:
@@ -52,7 +52,11 @@ portals:
       x: 0
       y: 0
       z: 0
-raidworld:
+event:
+  type: raid #для понимания какой класс будем десереализировать
+  display-name: "&cРейд"
+  bossbar: '&f« %design_clr_main%рейд %design_clr_primary%- коорды: %design_clr_main%{x},
+    {y}, {z} &f»  %design_clr_primary%(%design_clr_main%%time%%design_clr_primary%)'
   duration: 1200 # 20 мин
   paste:
     schem: raidWorld

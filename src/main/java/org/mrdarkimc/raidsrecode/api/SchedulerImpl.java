@@ -13,7 +13,7 @@ import java.util.*;
 public class SchedulerImpl implements EventScheduler {
     private final Queue<EventSupplier> events;
     private final long between; // Интервал между событиями в секундах
-    private BukkitRunnable scheduleTask;
+    private BukkitRunnable scheduleTask; //таска которая запускает события
     public RunnableEvent currentRunningEvent;
 
     public RunnableEvent getCurrentRunningEvent() {
@@ -35,11 +35,10 @@ public class SchedulerImpl implements EventScheduler {
         // Отменяем предыдущее расписание, если есть
         if (scheduleTask != null) {
             if (currentRunningEvent == null) {
-                scheduleTask.cancel();
-                new Message(null, "[SatanicEvents] Scheduler disabled", null).sendToPlayersWithPermission("satanic.helper");
+                scheduleTask.cancel(); //если событие запущено, то оно пусть работает, если нет. то отменяем планировщик и запускаем вновь
+                KeyedMessage.of("scheduler-turned-off").toHelpers();
             } else {
-                new Message(null, "[SatanicEvents] Scheduler are not disabled", null).sendToPlayersWithPermission("satanic.helper");
-                new Message(null, "[SatanicEvents] Disable started event first!", null).sendToPlayersWithPermission("satanic.helper");
+                KeyedMessage.of("scheduler-not-disabled").toHelpers();
                 return;
             }
         }
@@ -54,11 +53,17 @@ public class SchedulerImpl implements EventScheduler {
         };
         lastEventRan = System.currentTimeMillis();
         scheduleTask.runTaskTimer(SatanicRaids.getInstance(), runFirstEventAfterSchedulerStart, delayBetweenInTicks);
-        new Message(null, "[SatanicEvents] Scheduler started", null).sendToPlayersWithPermission("satanic.helper");
-        new Message(null, "[SatanicEvents] Количество событий: " + events.size(), null).sendToPlayersWithPermission("satanic.helper");
-        new Message(null, "[SatanicEvents] Эвент будет запущен через " + runFirstEventAfterSchedulerStart / 20 + " сек.", null).sendToPlayersWithPermission("satanic.helper");
+
+        KeyedMessage.of("scheduler-started")
+                .withPlaceholders(Map.of(
+                        "{amount}", String.valueOf(events.size()),
+                        "{after}", runFirstEventAfterSchedulerStart / 20 + " сек."
+                ))
+                .toHelpers();
+
         schedulerStartTime = System.currentTimeMillis();
     }
+
 
     @Override
     public void stopSchedule() {
@@ -70,52 +75,63 @@ public class SchedulerImpl implements EventScheduler {
     @Override
     public void stopCurrentEvent() {
         if (currentRunningEvent == null) {
+            KeyedMessage.of("scheduler-no-events-were-stopped").toHelpers();
             return;
         }
         if (currentRunningEvent.isEnded()) {
+            KeyedMessage.of("scheduler-event-already-ended").toHelpers();
             currentRunningEvent = null;
             return;
         }
+
         currentRunningEvent.stop();
         currentRunningEvent = null;
+        KeyedMessage.of("scheduler-event-stopped-success").toHelpers();
     }
+
 
     //Вызывается каждый час.(каждый between)
     public void spawnNextEvent() {
         //todo добавить поддержку
         if (currentRunningEvent != null) {
             if (!currentRunningEvent.isEnded()) {
-                new Message(null, "Event is already running. stop it manually", null).sendToPlayersWithPermission("satanic.helper");
+                KeyedMessage.of("scheduler-event-already-running").toHelpers();
                 return;
             }
         }
-        RunnableEvent runnableEvent = nextEvent();
+
+        EventSupplier supplier = nextEvent();
+        RunnableEvent runnableEvent = supplier.get();
         if (runnableEvent == null) {
-            new Message(null, "[SatanicRaids] Событие не может запуститься т.к оно null", null).sendToPlayersWithPermission("satanic.helper");
+            KeyedMessage.of("scheduler-event-is-null").toHelpers();
             return;
         }
         int duration = runnableEvent.getDuration();
         if (duration >= between) {
-            new Message(null, "Событие не может длиться дольше, чем будет запущено следующее событие", null).sendToPlayersWithPermission("satanic.helper");
+            KeyedMessage.of("scheduler-event-duration-too-long").toHelpers();
             return;
         }
-       currentRunningEvent = runnableEvent;
+
+        currentRunningEvent = runnableEvent;
         runnableEvent.start();
+        KeyedMessage.of("scheduler-next-event-started").withPlaceholders("{name}", supplier.getDisplayName()).toHelpers();
         EndTask endTask = new EndTask(runnableEvent);
         endTask.afterEnd(() -> this.currentRunningEvent = null);
         plannedEndTask = endTask.startTask();
     }
-    public RunnableEvent nextEvent() {
+
+    public EventSupplier nextEvent() {
         //todo nullchecks etc
         if (events.isEmpty()) {
-            stopSchedule();
-            new Message(null, "Не найдено событий, планировщик остановлен", null).sendToPlayersWithPermission("satanic.helper");
+            stopSchedule(); //todo убрать вот это выше по уровню, т.к next event можно вызвать извне
+            KeyedMessage.of("scheduler-no-events-stopped").toHelpers();
             return null;
         }
         EventSupplier poll = events.poll();
         events.add(poll);
-        return poll.get();
+        return poll;
     }
+
     public void sendNextEventInfo(Player player) {
         if (scheduleTask == null || scheduleTask.isCancelled()) {
             KeyedMessage.of("scheduler-disabled").send(player);

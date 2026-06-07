@@ -40,7 +40,7 @@ public class RaidWorldListener extends EventListener {
                 return;
             }
             event.setCancelled(true);
-            KeyedMessage.of("no-commands").send(player);
+            KeyedMessage.of("raids-no-commands").send(player);
         }
     }
 
@@ -51,7 +51,7 @@ public class RaidWorldListener extends EventListener {
         if (playerWorld.getName().equals(world.getName())) {
             RespawnerService respawnerService = SatanicRespawner.getInstance().getRespawnerService();
             respawnerService.fakeKillAndRespawn(leftPlayer);
-            KeyedMessage.of("messages.death-by-quit").withPlaceholders(Map.of("{player}", leftPlayer.getName())).broadcast();
+            KeyedMessage.of("raids-death-by-quit").withPlaceholders(Map.of("{player}", leftPlayer.getName())).broadcast();
         }
 
     }

@@ -32,7 +32,7 @@ public class RaidWorldKillAllTimer extends BukkitRunnable {
         this.eventWorld = raidWorld;
         this.initialTimeToDeath = timeToDeath;
         this.timeToDeath = timeToDeath;
-        this.timeToDeathDispatcher = KeyedMessage.of("time-to-death");
+        this.timeToDeathDispatcher = KeyedMessage.of("raids-time-to-death");
         this.killService = SatanicRespawner.getInstance().getRespawnerService();
     }
 

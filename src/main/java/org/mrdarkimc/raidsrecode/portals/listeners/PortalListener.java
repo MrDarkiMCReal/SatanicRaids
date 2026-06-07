@@ -1,16 +1,12 @@
 package org.mrdarkimc.raidsrecode.portals.listeners;
 
-import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.mrdarkimc.SatanicLib.NotifyAPI.KeyedMessage;
-import org.mrdarkimc.SatanicLib.messages.Message;
 import org.mrdarkimc.raidsrecode.EventListener;
 import org.mrdarkimc.raidsrecode.portals.Portal;
 
@@ -34,7 +30,7 @@ public class PortalListener extends EventListener {
             //если тп совершается не из рейдового мира, но в рейдовый мир -> значит какая-то хуня.
             for (Portal activePortal : activePortals) {
                 if (!activePortal.isAllowedToEnterPortal(player)) {
-                    KeyedMessage.of("already-met").send(player);
+                    KeyedMessage.of("raids-already-met").send(player);
                 }
             }
         }
@@ -50,7 +46,7 @@ public class PortalListener extends EventListener {
                 if (activePortal.isAllowedToEnterPortal(player)) {
                     activePortal.enter(player);
                 } else {
-                    KeyedMessage.of("already-met").send(player);
+                    KeyedMessage.of("raids-already-met").send(player);
                 }
                 e.setCancelled(true);
                 break;

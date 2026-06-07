@@ -103,6 +103,10 @@ public class WorthCalculator {
                     bonusHellic = 400;
                     placeKey = "3";
                 }
+                case 4 -> {
+                    bonusHellic = 200;
+                    placeKey = "4";
+                }
                 default -> {
                     bonusHellic = 100;
                     placeKey = "other";
@@ -116,7 +120,7 @@ public class WorthCalculator {
             placeholders.put("{bonus_amount}", Currency.formatPrice(bonusHellic));
             placeholders.put("{raid_amount}", Currency.formatPrice((int) raidAmount));
 
-            KeyedMessage.of("event-end-bonus")
+            KeyedMessage.of("raids-event-end-bonus")
                     .withPlaceholders(placeholders)
                     .send(player);
 
@@ -125,10 +129,10 @@ public class WorthCalculator {
     }
 
     public void giveAwarsAndBroadcastStats() {
-        Map<UUID, Long> top = this.getTopBalancePlayers(3);
+        Map<UUID, Long> top = this.getTopBalancePlayers(4);
 
         if (top.isEmpty()) {
-           KeyedMessage.of("event-end-empty").broadcast();
+           KeyedMessage.of("raids-event-end-empty").broadcast();
 
             return;
         }
@@ -144,7 +148,7 @@ public class WorthCalculator {
 
         String playersStatus = String.join("\n", lines);
 
-        MessageDispatcher message = KeyedMessage.of("event-end").withPlaceholders(Map.of("{players}", playersStatus));
+        MessageDispatcher message = KeyedMessage.of("raids-event-end").withPlaceholders(Map.of("{players}", playersStatus));
 
         message.broadcast();
         giveAwards();

@@ -50,6 +50,8 @@ public class RaidsCommand implements CommandExecutor {
                     return this.handleAddPoint(sender, "chests");
                 case "killbar":
                     return this.killbar();
+                    case "info":
+                    return this.info(sender);
                 case "loot":
                     return this.handleLoot(sender);
 //                    case "stop":
@@ -87,6 +89,10 @@ public class RaidsCommand implements CommandExecutor {
 //        worldPaster.pasteAsync((player.getLocation()));
 //        return true;
 //    }
+    public boolean info(CommandSender sender){
+        ((SchedulerImpl) scheduler).sendNextEventInfo((Player) sender);
+        return true;
+    }
     public boolean killbar(){
         NamespacedKey barKey = BossBarHandler.getInstance().barKey;
         KeyedBossBar bossBar = Bukkit.getBossBar(barKey);

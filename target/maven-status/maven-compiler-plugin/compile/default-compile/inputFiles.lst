@@ -13,7 +13,7 @@ C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\manager\
 C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\events\airdropevent\BaseAirdropEvent.java
 C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\manager\Undoable.java
 C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\portals\Offset.java
-C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\RaidWorldPaster.java
+C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\events\raidevent\RaidEventSupplier.java
 C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\listeners\RaidWorldListener.java
 C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\TaskHelper.java
 C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\tasks\HoloUpdater.java
@@ -29,6 +29,7 @@ C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\EventTim
 C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\portals\listeners\PortalListener.java
 C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\api\SchedulerImpl.java
 C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\api\TaskRunner.java
+C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\events\raidevent\RaidWorldPaster.java
 C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\SatanicRaids.java
 C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\listeners\LootSaveListener.java
 C:\Users\mrdarkimc\SatanicRaids\src\main\java\org\mrdarkimc\raidsrecode\WorthCalculator.java

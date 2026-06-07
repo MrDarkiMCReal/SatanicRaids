@@ -32,6 +32,7 @@ public class RaidEventSupplier extends EventSupplier {
         RaidEventSupplier supplier = new RaidEventSupplier();
         supplier.plugin = deserializer.getPlugin();
         supplier.setDisplayName(eventSec.getString("display-name", "Рейдовый мир"));
+        supplier.setType(eventSec.getString("type","EventTypeNull"));
         supplier.duration = eventSec.getInt("duration", 3600);
         supplier.pasteData = deserializer.getPasteData(eventSec);
         supplier.raidIn = deserializer.getPortal("raidInPortal");

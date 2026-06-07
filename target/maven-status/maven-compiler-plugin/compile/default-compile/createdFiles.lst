@@ -10,13 +10,13 @@ org\mrdarkimc\raidsrecode\api\SchedulerImpl.class
 org\mrdarkimc\raidsrecode\tasks\RaidWorldKillAllTimer$1.class
 org\mrdarkimc\raidsrecode\finders\AsyncLocationFinder$LocationFinderBuilder.class
 org\mrdarkimc\raidsrecode\events\airdropevent\BaseAirdropEvent.class
-org\mrdarkimc\raidsrecode\RaidWorldPaster$RaidWorldPasterBuilder.class
 org\mrdarkimc\raidsrecode\SatanicRaids.class
 org\mrdarkimc\raidsrecode\listeners\BossbarListener.class
 org\mrdarkimc\raidsrecode\api\EventScheduler.class
 org\mrdarkimc\raidsrecode\finders\FromPointAsyncFinder.class
 org\mrdarkimc\raidsrecode\tasks\HoloUpdater.class
 org\mrdarkimc\raidsrecode\eventrunner\EventRunner.class
+org\mrdarkimc\raidsrecode\events\raidevent\RaidEventSupplier.class
 org\mrdarkimc\raidsrecode\portals\listeners\PortalListener.class
 org\mrdarkimc\raidsrecode\listeners\RaidWorldListener.class
 org\mrdarkimc\raidsrecode\tasks\ChestUpdateTask.class
@@ -25,6 +25,7 @@ org\mrdarkimc\raidsrecode\eventrunner\RunTask.class
 org\mrdarkimc\raidsrecode\EventTimer$TimerTask.class
 org\mrdarkimc\raidsrecode\finders\LocationFinder.class
 org\mrdarkimc\raidsrecode\EventTimer.class
+org\mrdarkimc\raidsrecode\events\raidevent\RaidWorldPaster.class
 org\mrdarkimc\raidsrecode\manager\Spawnable.class
 org\mrdarkimc\raidsrecode\manager\SpawnManager.class
 org\mrdarkimc\raidsrecode\portals\Portal.class
@@ -36,9 +37,10 @@ org\mrdarkimc\raidsrecode\api\TaskRunner$1.class
 org\mrdarkimc\raidsrecode\TaskHelper.class
 org\mrdarkimc\raidsrecode\api\EventSupplier.class
 org\mrdarkimc\raidsrecode\BossBarHandler.class
-org\mrdarkimc\raidsrecode\RaidWorldPaster.class
 org\mrdarkimc\raidsrecode\api\TaskRunner.class
+org\mrdarkimc\raidsrecode\events\raidevent\RaidWorldPaster$RaidWorldPasterBuilder.class
 org\mrdarkimc\raidsrecode\commands\LootInventoryHolder.class
+org\mrdarkimc\raidsrecode\tasks\ChestUpdater$UndoableTimerMarker.class
 org\mrdarkimc\raidsrecode\EventDeserializer$PasteData.class
 org\mrdarkimc\raidsrecode\portals\RaidPortal.class
 org\mrdarkimc\raidsrecode\EventListener.class

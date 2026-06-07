@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Objects;
 
 //todo в EnhancedTextDisplays
-public class HoloUpdater implements EventTimer.TimerTask, Undoable {
+public class HoloUpdater implements ChestUpdater.UndoableTimerMarker {
     private final Location loc;
     private final MiniTextDisplay holo;
     private final int maxDisplayTime;
